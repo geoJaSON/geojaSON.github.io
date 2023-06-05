@@ -109,7 +109,7 @@ getToken(process.env.CLIENT_ID, process.env.CLIENT_SECRET)
                 alert("Error: " + textStatus + "\n" + errorThrown);
             }
         });
-    }
+    
 
     getToken().done(function(data) {
         var token = data.access_token;
