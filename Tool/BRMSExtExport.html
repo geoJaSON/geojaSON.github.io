@@ -34,8 +34,8 @@ $(document).ready(function() {
             type: "POST",
             data: {
                 'client_id': DOD_ID,
-                'client_secret': clientSecret,
-                'grant_type': 'DOD_CLIENT',
+                'client_secret': DOD_CLIENT,
+                'grant_type': 'client_credentials',
                 'f': 'json'
             }
         });
@@ -107,7 +107,7 @@ $(document).ready(function() {
                 alert("Error: " + textStatus + "\n" + errorThrown);
             }
         });
-    }
+    });
 
     getToken().done(function(data) {
         var token = data.access_token;
