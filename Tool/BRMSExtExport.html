@@ -41,7 +41,9 @@ $(document).ready(function() {
         });
     }
 
-    getToken(process.env.CLIENT_ID, process.env.CLIENT_SECRET)
+getToken(process.env.CLIENT_ID, process.env.CLIENT_SECRET)
+    .done(function(data) {
+        var token = data.access_token;
         $.ajax({
             url: "https://arcportal-ucop-partners.usace.army.mil/usacearcgis/rest/services/BRMS_DOD/FeatureServer/0/query",
             data: {
@@ -107,7 +109,7 @@ $(document).ready(function() {
                 alert("Error: " + textStatus + "\n" + errorThrown);
             }
         });
-    });
+    }
 
     getToken().done(function(data) {
         var token = data.access_token;
