@@ -28,20 +28,20 @@ $(document).ready(function() {
     var csvData = [headers];
 
     // Function to get token
-    function getToken() {
+    function getToken(DOD_ID, DOD_CLIENT) {
         return $.ajax({
             url: "https://arcportal-ucop-partners.usace.army.mil/usaceportal/sharing/rest/oauth2/token/",
             type: "POST",
             data: {
                 'client_id': DOD_ID,
-                'client_secret': DOD_CLIENT,
-                'grant_type': 'client_credentials',
+                'client_secret': clientSecret,
+                'grant_type': 'DOD_CLIENT',
                 'f': 'json'
             }
         });
     }
 
-    getToken(process.env.DOD_ID, process.env.DOD_CLIENT)
+    getToken(process.env.CLIENT_ID, process.env.CLIENT_SECRET)
         $.ajax({
             url: "https://arcportal-ucop-partners.usace.army.mil/usacearcgis/rest/services/BRMS_DOD/FeatureServer/0/query",
             data: {
