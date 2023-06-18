@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+	<script src="https://code.highcharts.com/highcharts-more.js"></script>
+
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+	<style>
+        body, html, #container {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+
+    <script>
+        fetch('https://services3.arcgis.com/Mnb1L9L8KBh57Ag4/arcgis/rest/services/Weather_Forecast_view/FeatureServer/1/query?where=location%3D%27Fort Worth%27&outFields=*&f=pjson')
+            .then(response => response.json())
+            .then(data => {
+                const dates = data.features.map(feature => feature.attributes.dt);
+                const tempHigh = data.features.map(feature => feature.attributes.temp_max);
+                const tempLow = data.features.map(feature => feature.attributes.temp_min);
+                const windSpeed = data.features.map(feature => feature.attributes.wind_speed);
+                const pop = data.features.map(feature => feature.attributes.pop*100);
+				const tempRange = data.features.map(feature => [feature.attributes.temp_min, feature.attributes.temp_max]);
+				const iconUrls = data.features.map(feature => 'https://redi-corps.usace.army.mil/sites/ucop/Shared%20Documents/NWS_RET/SVG/' + feature.attributes.weather_icon + '.svg');
+
+                Highcharts.chart('container', {
+                    chart: {
+								zoomType: 'xy',
+								backgroundColor: '#f9f8f8',
+								width: null,
+								height: null
+							},
+							exporting: {
+								enabled: false
+							},
+							credits: {
+    enabled: false
+  },
+
+                    title: {
+                        text: null
+                    
+},
+
+                    xAxis: [{
+    categories: dates,
+    crosshair: true,
+    labels: {
+        useHTML: true,
+		style: {
+            fontSize: '16px',
+            fontWeight: 'bold'
+        },
+        formatter: function() {
+            const iconUrl = iconUrls[this.pos];
+            return '<img src="' + iconUrl + '" style="width: 50px; height: 50px; vertical-align: middle;">' + this.value;
+        }
+    }
+}],
+
+                    yAxis: [{ // Primary yAxis for Temperature
+                        labels: {
+                            format: '{value}°F',
+                            style: {
+                                color: Highcharts.getOptions().colors[1]
+                            }
+                        },
+                        title: {
+                            text: 'Temperature',
+                            style: {
+                                color: Highcharts.getOptions().colors[1]
+                            }
+                        }
+                    }, { // Secondary yAxis for Wind Speed
+                        title: {
+                            text: 'Wind Speed',
+                            style: {
+                                color: 'green'
+                            }
+                        },
+                        labels: {
+                            format: '{value} mph',
+                            style: {
+                                color: 'green'
+                            },
+
+                        },
+                        opposite: true,
+						 max: 80,
+                    }, { // Tertiary yAxis for Probability of Precipitation
+                        title: {
+                            text: 'Probability of Precipitation',
+                            style: {
+                                color: 'rgba(0, 77, 168)'
+                            }
+                        },
+                        labels: {
+                            format: '{value} %',
+                            style: {
+                                color: 'rgba(0, 77, 168)'
+                            }
+                        },
+						max: 100,
+						 endOnTick: false,
+                        opposite: true
+                    }],
+                    tooltip: {
+                        shared: true
+                    },
+                    series: [{
+    name: 'Temperature Range',
+    type: 'arearange',
+    lineWidth: 0,
+    fillOpacity: 0.3,
+	    tooltip: {
+        valueSuffix: ' °F'
+    },
+    color: {
+        linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+        stops: [
+            [0, 'red'], // start with red at the top
+            [1, 'blue'] // end with blue at the bottom
+        ]
+    },
+    data: tempRange,
+    zIndex: 0
+}, {
+    name: 'Wind Speed',
+    type: 'spline',
+    color: 'green',
+    lineWidth: 2,
+	yAxis: 1,
+    dashStyle: 'dash',
+    data: windSpeed,
+    tooltip: {
+        valueSuffix: ' mph'
+    },
+    zIndex: 1
+}, {
+    name: 'Probability of Precipitation',
+    type: 'column',
+    color: 'rgba(0, 77, 168, 0.5)',
+    data: pop,
+	yAxis: 2,
+    tooltip: {
+        valueSuffix: ' %'
+    },
+    zIndex: 0
+}]
+
+
+
+                });
+            });
+    </script>
+</body>
+</html>
