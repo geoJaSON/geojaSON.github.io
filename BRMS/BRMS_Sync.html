@@ -9,6 +9,7 @@
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-more.js"></script>
     <script src="https://code.highcharts.com/modules/annotations.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/regression/dist/regression.min.js"></script>
 
     <script src="https://code.highcharts.com/modules/gantt.js"></script>
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
@@ -246,8 +247,37 @@
                         }
                     });
 
+                    var min = cumulativeData.datecontractorcomplete[0][0];
+                    data = cumulativeData.datecontractorcomplete.map(function(point) {
+                        return [(point[0] - min) / (24 * 60 * 60 * 1000), point[1]];
+                    });
+
+                    // fit the data to a polynomial of degree 2 (you can adjust the degree)
+                    var result = regression.polynomial(data, {
+                        order: 2
+                    });
+
+                    // estimate data out 10 days
+                    var forecast = [];
+                    for (var i = 1; i <= 10; i++) {
+                        var futureDate = (data[data.length - 1][0] + i) * 24 * 60 * 60 * 1000 + min; // convert back to original scale and add min
+                        var futureValue = result.predict(data.length + i)[1]; // get y value from prediction
+                        forecast.push([futureDate, Math.round(futureValue)]);
+                    }
+                    // adjust forecast so it does not decrease
+                    for (var i = 1; i < forecast.length; i++) {
+                        if (forecast[i][1] < forecast[i - 1][1]) {
+                            forecast[i][1] = forecast[i - 1][1];
+                        }
+                    }
+
+                    cumulativeData.forecast = forecast;
+
+                    console.log(forecast);
                     createChart();
                 }
+
+
 
 
                 function requestData() {
@@ -343,6 +373,9 @@
                                     [1, 'rgba(0, 120, 0, 0)']
                                 ]
                             }
+                        }, {
+                            name: 'Forecast Installs',
+                            data: cumulativeData.forecast
                         }, {
                             name: 'Ramp Up Low Production',
 
