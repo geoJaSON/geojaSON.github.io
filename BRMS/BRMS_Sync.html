@@ -352,7 +352,20 @@
                         }, {
                             name: 'Assessed',
                             data: cumulativeData.dateqacomplete,
-                            color: 'yellow'
+                            type: 'areaspline',
+                            color: 'rgba(250, 250, 0, 1)', // Add this line to set the stroke color of the 'Valid' series
+                            fillColor: { // Add this object to set the fill gradient of the 'Valid' series
+                                linearGradient: {
+                                    x1: 0,
+                                    y1: 0,
+                                    x2: 0,
+                                    y2: 1
+                                },
+                                stops: [
+                                    [0, 'rgba(250, 250, 0, 0.5)'],
+                                    [1, 'rgba(250, 250, 0, 0)']
+                                ]
+                            }
                         }, {
                             name: 'Sent to Contractor',
                             data: cumulativeData.datesenttocontractor
