@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Scrolling Marquee</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/regression/dist/regression.min.js"></script>
+
+    <style>
+        body,
+        html,
+        #container {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <marquee id="marquee" behavior="scroll" direction="left" scrollamount="5"></marquee>
+
+    <div id="container"></div>
+
+    <script>
+        $(document).ready(function() {
+            var cumulativeData = {
+                created_date: [],
+                dateqacomplete: [],
+                datesenttocontractor: [],
+                datecontractorcomplete: []
+            };
+
+            function processData(data) {
+                // Process data here and push to cumulativeData
+                // Please replace with your actual data processing logic
+                data.features.forEach(function(feature) {
+                    var attr = feature.attributes;
+                    var dates = [
+                        attr.created_date,
+                        attr.dateqacomplete,
+                        attr.datesenttocontractor,
+                        attr.datecontractorcomplete
+                    ];
+                    dates.forEach(function(date, index) {
+                        if (date) {
+                            var dateObj = new Date(date);
+                            var key = Object.keys(cumulativeData)[index];
+
+                            // Round down to the nearest 6 hours
+                            var hours = Math.floor(dateObj.getHours() / 24) * 1;
+                            dateObj.setHours(hours);
+                            dateObj.setMinutes(0);
+                            dateObj.setSeconds(0);
+                            dateObj.setMilliseconds(0);
+
+                            // Find if this timestamp already exists in the array
+                            var existingEntry = cumulativeData[key].find(entry => entry[0] === dateObj.getTime());
+
+                            if (existingEntry) {
+                                // If it exists, increase the count
+                                existingEntry[1]++;
+                            } else {
+                                // If it doesn't exist, create a new entry
+                                cumulativeData[key].push([dateObj.getTime(), 1]);
+                            }
+                        }
+                    });
+                });
+
+                Object.keys(cumulativeData).forEach(function(key) {
+                    cumulativeData[key].sort(function(a, b) {
+                        return a[0] - b[0];
+                    });
+
+                    for (var i = 1; i < cumulativeData[key].length; i++) {
+                        cumulativeData[key][i][1] += cumulativeData[key][i - 1][1];
+                    }
+                });
+
+                createChart();
+            }
+
+
+            function requestData() {
+                $.ajax({
+                    url: "https://arcportal-ucop-corps.usace.army.mil/esf3/rest/services/TempRoofing/BRMS/FeatureServer/0/query",
+                    data: {
+                        f: 'json',
+                        where: "workstate='Valid'",
+                        outFields: 'created_date,dateqacomplete,datesenttocontractor,datecontractorcomplete',
+                        returnGeometry: false
+                    },
+                    success: function(data) {
+                        processData(data);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        alert("Error: " + textStatus + "\n" + errorThrown);
+                    }
+                });
+            }
+
+            function createChart() {
+                Highcharts.chart('container', {
+                    chart: {
+                        type: 'line'
+                    },
+                    title: {
+                        text: 'Production Path'
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        title: {
+                            text: 'Date'
+                        }
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Cumulative Total'
+                        }
+                    },
+                    series: [{
+                        name: 'Valid ROE',
+                        type: 'areaspline',
+                        data: cumulativeData.created_date,
+                        color: 'rgba(0, 120, 200, 1)', // Add this line to set the stroke color of the 'Valid' series
+                        fillColor: { // Add this object to set the fill gradient of the 'Valid' series
+                            linearGradient: {
+                                x1: 0,
+                                y1: 0,
+                                x2: 0,
+                                y2: 1
+                            },
+                            stops: [
+                                [0, 'rgba(0, 120, 200, 0.5)'],
+                                [1, 'rgba(0, 120, 200, 0)']
+                            ]
+                        }
+                    }, {
+                        name: 'Assessments Complete',
+                        data: cumulativeData.dateqacomplete,
+                        type: 'areaspline',
+                        color: 'rgba(250, 250, 0, 1)', // Add this line to set the stroke color of the 'Valid' series
+                        fillColor: { // Add this object to set the fill gradient of the 'Valid' series
+                            linearGradient: {
+                                x1: 0,
+                                y1: 0,
+                                x2: 0,
+                                y2: 1
+                            },
+                            stops: [
+                                [0, 'rgba(250, 250, 0, 0.5)'],
+                                [1, 'rgba(250, 250, 0, 0)']
+                            ]
+                        }
+                    }, {
+                        name: 'Assigned to DOD',
+                        data: cumulativeData.datesenttocontractor,
+
+                    }, {
+                        name: 'Installed',
+                        data: cumulativeData.datecontractorcomplete,
+                        type: 'areaspline',
+                        color: 'rgba(0, 120, 0, 1)', // Add this line to set the stroke color of the 'Valid' series
+                        fillColor: { // Add this object to set the fill gradient of the 'Valid' series
+                            linearGradient: {
+                                x1: 0,
+                                y1: 0,
+                                x2: 0,
+                                y2: 1
+                            },
+                            stops: [
+                                [0, 'rgba(0, 120, 0, 0.5)'],
+                                [1, 'rgba(0, 120, 0, 0)']
+                            ]
+                        }
+                    }]
+                });
+            }
+
+            requestData();
+        });
+    </script>
+</body>
+
+</html>
