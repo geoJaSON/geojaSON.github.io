@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Editor</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.21/esri/themes/light/main.css">
+    <script src="https://redi-corps.usace.army.mil/sites/ucop/Shared%20Documents/DCO/Blue-Roof/HTML/ckeditor/ckeditor.js"></script>
+    <script src="https://js.arcgis.com/4.21/"></script>
+</head>
+
+<body>
+    <div id="editor"></div>
+    <button onclick="submitData()">Submit</button>
+    <div id="message"></div>
+
+    <script>
+        const QUERY_API_URL = 'https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/POD_Dash/FeatureServer/5/query?where=OBJECTID%3D3&outFields=*&f=json';
+        const UPDATE_API_URL = 'https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/POD_Dash/FeatureServer/5/updateFeatures';
+
+        let editorData = "";
+        let objectID = null;
+
+        CKEDITOR.replace('editor', {
+            extraPlugins: 'colorbutton'
+        });
+
+        require(["esri/identity/IdentityManager", "esri/request", "dojo/domReady!"], function(IdentityManager, esriRequest) {
+            CKEDITOR.instances.editor.on('instanceReady', function() {
+                esriRequest(QUERY_API_URL, {
+                    responseType: "json"
+                }).then(function(response) {
+                    let data = response.data;
+                    let attributeData = data.features[0].attributes.texbox;
+                    objectID = data.features[0].attributes.objectid;
+                    CKEDITOR.instances.editor.setData(attributeData);
+                });
+            });
+
+            CKEDITOR.instances.editor.on('change', function() {
+                editorData = CKEDITOR.instances.editor.getData();
+                editorData = editorData.replace(/<span style="color: rgb\(\d+,\s*\d+,\s*\d+\);">(.*?)<\/span>/gi, '<span style="color:$1;">$2</span>');
+            });
+
+            // Function to display a message to the user
+            function showMessage(message) {
+                const messageDiv = document.getElementById('message');
+                messageDiv.textContent = message;
+            }
+
+            // Function to submit data back to REST API
+            window.submitData = function() {
+                // Create features array with updated data
+                const features = [{
+                    "attributes": {
+                        "objectid": objectID,
+                        "texbox": editorData
+                    }
+                }];
+
+                esriRequest(UPDATE_API_URL, {
+                    method: "post",
+                    query: {
+                        f: "json",
+                        features: JSON.stringify(features)
+                    }
+                }).then(function(response) {
+                    let data = response.data;
+                    if (data.updateResults && data.updateResults[0].success) {
+                        showMessage('Data successfully posted');
+                    } else {
+                        showMessage('Failed to post data');
+                    }
+                }).catch(function(error) {
+                    console.error('Error:', error);
+                    showMessage('Error: ' + error);
+                });
+            };
+        });
+    </script>
+</body>
+
+</html>

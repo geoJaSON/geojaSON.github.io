@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Scrolling Marquee</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.21/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.21/"></script>
+    <style>
+        #marquee {
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            color: white;
+            vertical-align: top;
+        }
+        
+        marquee {
+            width: 100%;
+            margin: 0 auto;
+            white-space: nowrap;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+
+<body>
+    <marquee id="marquee" behavior="scroll" direction="left" scrollamount="5"></marquee>
+
+    <script>
+        require([
+            "esri/identity/IdentityManager",
+            "esri/request",
+            "dojo/domReady!"
+        ], function(IdentityManager, esriRequest) {
+            function requestData() {
+                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/POD_Dash/FeatureServer/3/query", {
+                    responseType: "json",
+                    query: {
+                        f: 'json',
+                        where: "1=1",
+                        outFields: 'event, time, days',
+                        returnGeometry: false
+                    }
+                }).then(function(response) {
+                    let data = response.data;
+                    if (data.features && data.features.length > 0) {
+                        // Sort data by 'time'
+                        data.features.sort(function(a, b) {
+                            return new Date(a.attributes.time) - new Date(b.attributes.time);
+                        });
+
+                        var message = "";
+                        for (var i = 0; i < data.features.length; i++) {
+                            message += data.features[i].attributes.event + "  ";
+                            message += data.features[i].attributes.time + " HST  ";
+                            if (data.features[i].attributes.days === 'Sun,Mon,Tue,Wed,Thu,Fri,Sat') {
+                                message += "Everyday";
+                            } else {
+                                message += data.features[i].attributes.days;
+                            }
+                            if (i !== data.features.length - 1) {
+                                message += "  ||   ";
+                            }
+                        }
+                        document.getElementById('marquee').textContent = message;
+                    }
+                }).catch(function(error) {
+                    alert("Error: " + error.name + "\n" + error.message);
+                });
+            }
+
+            // Call it instantly on page load
+            requestData();
+
+            // Then every 2 minutes
+            setInterval(requestData, 120000); // 120000ms = 2 minutes
+        });
+    </script>
+</body>
+
+</html>
