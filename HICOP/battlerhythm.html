@@ -33,6 +33,8 @@
             "dojo/domReady!"
         ], function(IdentityManager, esriRequest) {
             function requestData() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const event = urlParams.get('event');
                 esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/POD_Dash/FeatureServer/3/query", {
                     responseType: "json",
                     query: {
