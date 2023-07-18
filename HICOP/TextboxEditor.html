@@ -12,10 +12,11 @@
     <script src="https://redi-corps.usace.army.mil/sites/ucop/Shared%20Documents/DCO/Blue-Roof/HTML/ckeditor/ckeditor.js"></script>
     <script>
         // Replace with your REST API URL
-        const QUERY_API_URL = 'https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/POD_Dash/FeatureServer/5/query?where=OBJECTID%3D3&outFields=*&f=json';
-        const UPDATE_API_URL = 'https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/POD_Dash/FeatureServer/5/updateFeatures';
         const urlParams = new URLSearchParams(window.location.search);
         const oid = urlParams.get('oid'); // Default to 'Fort Worth' if no parameter provided
+        const QUERY_API_URL = 'https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/POD_Dash/FeatureServer/5/query?where=OBJECTID%3D' + oid + '& outFields = * & f = json ';
+        const UPDATE_API_URL = 'https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/POD_Dash/FeatureServer/5/updateFeatures';
+
         let editorData = "";
         let objectID = null;
 
