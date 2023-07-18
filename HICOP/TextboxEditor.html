@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+
+    <div id="editor"></div>
+
+    <button onclick="submitData()">Submit</button>
+
+    <div id="message"></div>
+
+    <script src="https://redi-corps.usace.army.mil/sites/ucop/Shared%20Documents/DCO/Blue-Roof/HTML/ckeditor/ckeditor.js"></script>
+    <script>
+        // Replace with your REST API URL
+        const QUERY_API_URL = 'https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/POD_Dash/FeatureServer/5/query?where=OBJECTID%3D3&outFields=*&f=json';
+        const UPDATE_API_URL = 'https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/POD_Dash/FeatureServer/5/updateFeatures';
+        const urlParams = new URLSearchParams(window.location.search);
+        const oid = urlParams.get('oid'); // Default to 'Fort Worth' if no parameter provided
+        let editorData = "";
+        let objectID = null;
+
+        CKEDITOR.replace('editor', {
+            extraPlugins: 'colorbutton'
+        });
+
+        CKEDITOR.instances.editor.on('instanceReady', function() {
+            fetch(QUERY_API_URL)
+                .then(response => response.json())
+                .then(data => {
+                    let attributeData = data.features[0].attributes.texbox;
+                    objectID = data.features[0].attributes.objectid;
+                    CKEDITOR.instances.editor.setData(attributeData);
+                });
+        });
+
+        CKEDITOR.instances.editor.on('change', function() {
+            editorData = CKEDITOR.instances.editor.getData();
+            editorData = editorData.replace(/<span style="color: rgb\(\d+,\s*\d+,\s*\d+\);">(.*?)<\/span>/gi, '<span style="color:$1;">$2</span>');
+        });
+
+
+        // Function to display a message to the user
+        function showMessage(message) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+        }
+
+        // Function to submit data back to REST API
+        function submitData() {
+            // Create features array with updated data
+            const features = [{
+                "attributes": {
+                    "objectid": objectID,
+                    "texbox": editorData
+                }
+            }];
+
+            // Convert features to URL-encoded string
+            const formData = new URLSearchParams();
+            formData.append('f', 'json');
+            formData.append('features', JSON.stringify(features));
+
+            // Post data to REST API
+            fetch(UPDATE_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData.toString()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.updateResults && data.updateResults[0].success) {
+                        showMessage('Data successfully posted');
+                    } else {
+                        showMessage('Failed to post data');
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    showMessage('Error: ' + error);
+                });
+        }
+    </script>
+
+</body>
+
+</html>
