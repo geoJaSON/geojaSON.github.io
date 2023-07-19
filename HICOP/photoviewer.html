@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Operation Blue Roof Status Lookup</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        /* Your CSS goes here */
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/magnific-popup.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/jquery.magnific-popup.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <p id="result"></p>
+    </div>
+    <script>
+        $(document).ready(function() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var event = urlParams.get('event');
+            $.ajax({
+
+                url: "https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/service_e0c1275c0b774cafaa8c3f5a67ae3a22/FeatureServer/0/query",
+                data: {
+                    f: 'json',
+                    where: "eventid = '" + event + "'",
+                    outFields: 'objectid' // We only need the IDs
+                },
+                success: function(data) {
+                    for (var j = 0; j < data.features.length; j++) {
+                        var objectId = data.features[j].attributes.objectid;
+
+                        // Fetch and display image attachments for each object
+                        $.ajax({
+                            url: "https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/service_e0c1275c0b774cafaa8c3f5a67ae3a22/FeatureServer/0/" + objectId + "/attachments?f=json",
+                            success: function(attachmentData) {
+                                if (attachmentData && attachmentData.attachmentInfos && attachmentData.attachmentInfos.length > 0) {
+                                    for (var i = 0; i < attachmentData.attachmentInfos.length; i++) {
+                                        var attachmentUrl = "https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/service_e0c1275c0b774cafaa8c3f5a67ae3a22/FeatureServer/0/" + objectId + "/attachments/" + attachmentData.attachmentInfos[i].id;
+                                        var attachmentName = attachmentData.attachmentInfos[i].name;
+                                        var extension = attachmentName.split('.').pop().toLowerCase();
+                                        var fileName = attachmentName.slice(0, -extension.length - 1); // get the filename without extension
+
+                                        if (extension == "jpg" || extension == "jpeg" || extension == "png" || extension == "gif") {
+                                            // It's an image
+                                            $("#result").append("<a href='" + attachmentUrl + "' title='" + fileName + "' class='mfp-image'><img src='" + attachmentUrl + "' alt='Image' style='width:100px; height:100px;'></a>");
+                                        } else if (extension == "pdf") {
+                                            // It's a PDF
+                                            $("#result").append("<a href='" + attachmentUrl + "' title='" + fileName + "' target='_blank'><img src='https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg' alt='PDF' style='width:100px; height:100px;'></a>");
+                                        }
+                                    }
+                                    $('.mfp-image').magnificPopup({
+                                        type: 'image'
+                                    });
+                                }
+                            },
+                        });
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    // Error handling
+                    alert("Error: " + textStatus + "\n" + errorThrown);
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
