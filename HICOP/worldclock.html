@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            background-color: #002958;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .clock {
+            text-align: center;
+            color: white;
+        }
+        .clock div {
+            display: inline;
+            margin: 0 1vw;
+            font-size: 3vw; /* Adjust this value as needed */
+        }
+        .clock b {
+            font-size: 1.5vw; /* Adjust this value as needed */
+            margin-right: 0.5vw;
+        }
+    </style>
+</head>
+<body>
+    <div class="clock">
+        <div><b>Honolulu:</b> <span id="honolulu-time"></span> <span id="honolulu-day"></span></div>
+        <div><b>Eastern US:</b> <span id="eastern-us-time"></span> <span id="eastern-us-day"></span></div>
+        <div><b>Guam:</b> <span id="guam-time"></span> <span id="guam-day"></span></div>
+    </div>
+<script>
+        function updateTime() {
+            var now = new Date();
+            
+            var guamTime = new Date(now.toLocaleString('en-US', { timeZone: 'Pacific/Guam' }));
+            document.getElementById('guam-time').textContent = guamTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('guam-day').textContent = guamTime.toLocaleDateString('en-US', {weekday: 'short'});
+            
+            var easternUSTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+            document.getElementById('eastern-us-time').textContent = easternUSTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('eastern-us-day').textContent = easternUSTime.toLocaleDateString('en-US', {weekday: 'short'});
+            
+            var honoluluTime = new Date(now.toLocaleString('en-US', { timeZone: 'Pacific/Honolulu' }));
+            document.getElementById('honolulu-time').textContent = honoluluTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('honolulu-day').textContent = honoluluTime.toLocaleDateString('en-US', {weekday: 'short'});
+        }
+
+        updateTime();
+        setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>

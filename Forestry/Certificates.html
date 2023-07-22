@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Form</title>
+    <style>
+        .form-row {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 5px;
+        }
+        
+        .form-row input,
+        .form-row select {
+            flex-basis: calc(20% - 10px);
+        }
+        
+        .form-row-full {
+            width: 100%;
+        }
+        
+        .form-row-full textarea {
+            width: 100%;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+    <script src="https://js.arcgis.com/4.21/"></script>
+</head>
+
+<body>
+    <form id="myForm">
+        <div class="form-row">
+            <input type="text" id="loadBookNo" name="loadBookNo" placeholder="Book Number">
+            <input type="text" id="loadTicketNo" name="loadTicketNo" placeholder="Ticket Number">
+            <input type="date" id="date" name="date" placeholder="Date">
+            <input type="text" id="certificateNo" name="certificateNo" placeholder="Certificate  Number">
+            <input type="text" id="destination" name="destination" placeholder="Destination">
+        </div>
+
+        <div class="form-row">
+            <select id="certificateProductProcessed" name="certificateProductProcessed">
+		    <option value="" disabled selected>Product</option>
+
+            <option value="None">None</option>
+            <option value="Firewood">Firewood</option>
+            <option value="FishLogs">FishLogs</option>
+            <option value="HogFuel">HogFuel</option>
+            <option value="Lumber">Lumber</option>
+            <option value="Paper">Paper</option>
+            <option value="Poles">Poles</option>
+            <option value="Pulp">Pulp</option>
+            <option value="ShakeFencing">ShakeFencing</option>
+            <option value="Slash">Slash</option>
+            <option value="Rock">Rock</option>
+            <option value="Scraps">Scraps</option>
+            <option value="Utility">Utility</option>
+            <option value="Veneer">Veneer</option>
+        </select><br>
+            <select id="species" name="species">
+		    <option value="" disabled selected>Species</option>
+
+            <option value="Alder">Alder</option>
+            <option value="Chamarecyparis">Chamarecyparis</option>
+            <option value="Cottonwood">Cottonwood</option>
+            <option value="Douglas Fir">Douglas Fir</option>
+            <option value="Grand Fir">Grand Fir</option>
+            <option value="Pacific Madrona">Pacific Madrona</option>
+            <option value="Pondarosa Pine">Pondarosa Pine</option>
+            <option value="Red Cedar">Red Cedar</option>
+            <option value="White Fir">White Fir</option>
+            <option value="White Oak">White Oak</option>
+            <option value="Woody Biomass">Woody Biomass</option>
+        </select><br>
+            <input type="text" id="loads" name="loads" placeholder="Loads">
+            <input type="text" id="acresCut" name="acresCut" placeholder="Acres Cut">
+            <input type="text" id="sawlog" name="sawlog" placeholder="Sawlog">
+            <input type="text" id="utility" name="utility" placeholder="Utility">
+            <input type="text" id="cleanLogUtility" name="cleanLogUtility" placeholder="Clean Log">
+            <input type="text" id="slashRock" name="slashRock" placeholder="Slash/Rock">
+            <input type="text" id="payment" name="payment" placeholder="Payment">
+            <input type="text" id="otherChargesDue" name="otherChargesDue" placeholder="Other Charges">
+        </div>
+        <div class="form-row form-row-full">
+
+            <textarea id="comments" name="comments" rows="2" placeholder="Comments"></textarea>
+        </div>
+        <input type="submit" value="Submit New Certificate">
+    </form>
+    <script>
+        let selectedAddress = ''; // Move this line here
+        let featureMap = new Map();
+        var urlParams = new URLSearchParams(window.location.search);
+        var cid = urlParams.get('cid');
+        var pgid = urlParams.get('pgid');
+        document.getElementById('myForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            updateValues(event);
+            // submit the form manually if needed
+            // this.form.submit();
+        });
+
+        function updateValues(event) {
+            event.preventDefault(); // Prevent the form from submitting
+
+            // Get the current values of LoadBookNo and LoadTicketNo
+            const loadBookNoInput = document.getElementById('loadBookNo');
+            const loadTicketNoInput = document.getElementById('loadTicketNo');
+
+            const currentLoadBookNo = parseInt(loadBookNoInput.value);
+            const currentLoadTicketNo = parseInt(loadTicketNoInput.value);
+
+            // Update the values
+            loadBookNoInput.value = currentLoadBookNo; // This line is not necessary, but included for clarity
+
+            if (!isNaN(currentLoadTicketNo)) {
+                // Increment the value of LoadTicketNo by 1
+                loadTicketNoInput.value = currentLoadTicketNo + 1;
+            } else {
+                // If the current value is not a valid number, set it to 1
+                loadTicketNoInput.value = 1;
+            }
+
+            // Now you can submit the form if needed or perform other actions
+            // ...
+        }
+        require(["esri/identity/IdentityManager", "esri/request", "dojo/domReady!"], function(IdentityManager, esriRequest) {
+            // Fetch the data when the document is ready
+            esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/2/query", {
+                responseType: "json",
+                query: {
+                    where: "1=1",
+                    outFields: "ContactBusinessName, ContactStreet1",
+                    f: "json"
+                }
+
+            }).then(function(response) {
+                document.getElementById('myForm').addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    updateValues(event);
+                });
+
+                function updateValues(event) {
+                    event.preventDefault();
+                    const dateInput = document.getElementById('date').value;
+                    const date = new Date(dateInput);
+                    const StartingScaleDate = Math.floor(date.getTime() / 1000);
+                    const LoadBookNo = document.getElementById('loadBookNo').value;
+                    const LoadTicketNo = parseInt(document.getElementById('loadTicketNo').value);
+                    const CertificateNo = document.getElementById('certificateNo').value;
+                    const Destination = document.getElementById('destination').value;
+                    const CertificateProductProcessed = document.getElementById('certificateProductProcessed').value;
+                    const Species = document.getElementById('species').value;
+                    const Loads = document.getElementById('loads').value;
+                    const AcresCut = document.getElementById('acresCut').value;
+                    const Sawlog = document.getElementById('sawlog').value;
+                    const Utility = document.getElementById('utility').value;
+                    const CleanLogUtility = document.getElementById('cleanLogUtility').value;
+                    const SlashRock = document.getElementById('slashRock').value;
+                    const Payment = document.getElementById('payment').value;
+                    const OtherChargesDue = document.getElementById('otherChargesDue').value;
+
+                    const features = [{
+                        "attributes": {
+                            "LoadBookNo": LoadBookNo,
+                            "LoadTicketNo": LoadTicketNo,
+                            "StartingScaleDate": StartingScaleDate,
+                            "CertificateNo ": CertificateNo,
+                            "Destination": Destination,
+                            "CertificateProductProcessed": CertificateProductProcessed,
+                            "Species": Species,
+                            "Loads": Loads,
+                            "AcresCut": AcresCut,
+                            "Sawlog": Sawlog,
+                            "Utility": Utility,
+                            "CleanLogUtility": CleanLogUtility,
+                            "SlashRock": SlashRock,
+                            "Payment": Payment,
+                            "OtherChargesDue": OtherChargesDue,
+                            "parentglobalid": pgid
+                        }
+                    }];
+
+                    const formData = new URLSearchParams();
+                    formData.append('f', 'json');
+                    formData.append('features', JSON.stringify(features));
+                    console.log(features);
+
+                    esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/9/addFeatures ", {
+                        method: "post ",
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: formData.toString()
+                    }).then(function(response) {
+                        console.log(response.data);
+                    }).catch(function(error) {
+                        console.error(error);
+                    });
+                }
+
+            })
+        });
+    </script>
+</body>
+
+</html>

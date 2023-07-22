@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Data Input</title>
+    <style>
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+        }
+        
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            align-items: center;
+        }
+        
+        label {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .submit-btn {
+            grid-column: span 2;
+        }
+    </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+    <script src="https://js.arcgis.com/4.21/"></script>
+
+</head>
+
+<body>
+    <form id="dataForm">
+        <div class="form-group">
+            <label for="biddername">
+                <select id="biddername" name="biddername">
+
+                    <option value="destination1">Loading Contacts</option>
+                    <option value=" " disabled selected>Species</option>
+                </select>
+            </label>
+
+            <label for="bidderaddress">
+                <input type="text" id="bidderaddress" name="bidderaddress" placeholder="Bidder Address">
+            </label>
+
+            <label for="bidunit">
+                <input type="number" id="bidunit" name="bidunit" placeholder="Bid Unit">
+            </label>
+
+            <label for="biddeposit">
+                <input type="number" id="biddeposit" name="biddeposit" placeholder="Bid Deposit">
+            </label>
+
+            <label for="totaloffer">
+                <input type="number" id="totaloffer" name="totaloffer" placeholder="Total Offer">
+            </label>
+
+        </div>
+        <div class="submit-btn">
+            <input type="submit" value="Submit New Bid">
+        </div>
+    </form>
+
+
+    <script>
+        let selectedAddress = ''; // Move this line here
+        let featureMap = new Map();
+        var urlParams = new URLSearchParams(window.location.search);
+        var cid = urlParams.get('cid');
+        var pgid = urlParams.get('pgid');
+
+        require(["esri/identity/IdentityManager", "esri/request", "dojo/domReady!"], function(IdentityManager, esriRequest) {
+            // Fetch the data when the document is ready
+            esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/2/query", {
+                responseType: "json",
+                query: {
+                    where: "1=1",
+                    outFields: "ContactBusinessName, ContactStreet1",
+                    f: "json"
+                }
+
+            }).then(function(response) {
+                const bidderSelect = document.getElementById('biddername');
+
+                bidderSelect.innerHTML = '';
+
+                // Sort and iterate through features
+                const sortedFeatures = response.data.features.sort((a, b) => {
+                    if (a.attributes.ContactBusinessName < b.attributes.ContactBusinessName) return -1;
+                    if (a.attributes.ContactBusinessName > b.attributes.ContactBusinessName) return 1;
+                    return 0;
+                });
+                sortedFeatures.forEach(feature => {
+                    const option = document.createElement('option');
+                    option.value = feature.attributes.ContactBusinessName;
+                    option.textContent = feature.attributes.ContactBusinessName;
+
+                    // Store the feature in the map
+                    featureMap.set(option.value, feature);
+
+                    // Append the new option to the select
+                    bidderSelect.appendChild(option);
+                });
+
+                document.getElementById('biddername').addEventListener('change', function(e) {
+                    // Get the feature from the map using the selected value
+                    const selectedFeature = featureMap.get(e.target.value);
+
+                    if (selectedFeature) {
+                        selectedAddress = selectedFeature.attributes.ContactStreet1;
+                        document.getElementById('bidderaddress').value = selectedAddress;
+                        console.log('Selected Address:', selectedAddress);
+                    }
+                });
+
+
+
+                // Convert the select box into a searchable select box with Select2
+                $(bidderSelect).select2({
+                    width: 'resolve' // need to override the changed width by Select2
+                }).on('select2:select', function(e) {
+                    // Get the feature from the map using the selected value
+                    const selectedFeature = featureMap.get(e.target.value);
+
+                    if (selectedFeature) {
+                        selectedAddress = selectedFeature.attributes.ContactStreet1;
+                        document.getElementById('bidderaddress').value = selectedAddress;
+                        console.log('Selected Address:', selectedAddress);
+                    }
+                });
+            }).catch(function(error) {
+                console.error(error);
+            });
+
+            document.getElementById('dataForm').addEventListener('submit', function(event) {
+                // Prevent the default form submit action
+                event.preventDefault();
+
+                // Get values from the form
+                const bname = document.getElementById('biddername').value;
+                const baddress = document.getElementById('bidderaddress').value;
+                const unit = parseInt(document.getElementById('bidunit').value);
+                const deposit = parseInt(document.getElementById('biddeposit').value);
+                const total = parseInt(document.getElementById('totaloffer').value);
+                const htol = parseInt(document.getElementById('htolno').value);
+
+                // Create features array
+                const features = [{
+                    "attributes": {
+                        "abscontractno": cid,
+                        "biddername": bname,
+                        "bidderaddress": baddress,
+                        "unitbid": unit,
+                        "biddeposit": deposit,
+                        "totaloffer": total,
+                        "AbsListNo": bidrank,
+                        "parentglobalid": pgid
+                    }
+                }];
+
+                // Convert features to URL-encoded string
+                const formData = new URLSearchParams();
+                formData.append('f', 'json');
+                formData.append('features', JSON.stringify(features));
+                console.log(features);
+                // Send a POST request to your REST endpoint
+                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/8/addFeatures", {
+                    method: "post",
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData.toString()
+                }).then(function(response) {
+                    console.log(response.data);
+                }).catch(function(error) {
+                    console.error(error);
+                });
+            });
+        });
+    </script>
+    </body

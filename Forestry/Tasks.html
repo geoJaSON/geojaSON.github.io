@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Task List with Checkboxes</title>
+    <style>
+        #listContainer {
+            width: 50%;
+            margin: auto;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        #listContainer .taskType {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        
+        #listContainer .taskItem {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+        
+        #listContainer .taskItem .taskDetails {
+            flex-grow: 1;
+        }
+    </style>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.21/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.21/"></script>
+    <script>
+        var urlParams = new URLSearchParams(window.location.search);
+        var pgid = urlParams.get('pgid');
+        require([
+            "esri/identity/IdentityManager",
+            "esri/request",
+            "dojo/domReady!"
+        ], function(IdentityManager, esriRequest) {
+            esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/10/query", {
+                responseType: "json",
+                query: {
+                    where: "parentglobalid = '" + pgid + "'",
+                    outFields: "*",
+                    f: "json"
+                }
+            }).then(function(response) {
+                // User is already signed in
+                loadData(response.data);
+            }).catch(function(error) {
+                // Error occurred (possibly because the user is not signed in)
+                IdentityManager.getCredential("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/10/query?where=1=1&outFields=*&f=pjson")
+                    .then(function(credential) {
+                        // Try to load the data again
+                        esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/10/query?where=1=1&outFields=*&f=pjson", {
+                            responseType: "json",
+                            query: {
+                                where: "parentglobalid = '" + pgid + "'",
+                                outFields: "*",
+                                f: "json"
+                            }
+                        }).then(function(response) {
+                            loadData(response.data);
+                        });
+                    });
+            });
+
+            function loadData(data) {
+
+                let listContainer = document.getElementById('listContainer');
+
+                let tasksByType = {};
+                for (let feature of data.features) {
+                    let taskType = feature.attributes.TaskType;
+                    if (!tasksByType[taskType]) {
+                        tasksByType[taskType] = [];
+                    }
+                    tasksByType[taskType].push(feature);
+                }
+
+                for (let taskType in tasksByType) {
+                    let taskTypeHeader = document.createElement('h2');
+                    taskTypeHeader.textContent = taskType;
+                    taskTypeHeader.classList.add('taskType');
+                    listContainer.appendChild(taskTypeHeader);
+
+                    for (let feature of tasksByType[taskType]) {
+                        let checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.checked = feature.attributes.TaskDateComplete !== null;
+
+                        checkbox.onchange = function() {
+                            if (checkbox.checked) {
+                                const features = [{
+                                    attributes: {
+                                        OBJECTID: feature.attributes.OBJECTID,
+                                        TaskDateComplete: new Date().getTime()
+                                    }
+                                }];
+
+                                // Convert features to URL-encoded string
+                                const formData = new URLSearchParams();
+                                formData.append('f', 'json');
+                                formData.append('updates', JSON.stringify(features));
+                                console.log(features);
+                                // Send a POST request to your REST endpoint
+                                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/10/applyEdits", {
+                                    method: "post",
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded'
+                                    },
+                                    body: formData.toString()
+                                }).then(function(response) {
+                                    console.log(response.data);
+                                }).catch(function(error) {
+                                    console.error(error);
+                                })
+                            }
+                        };
+
+
+                        let detailsDiv = document.createElement('div');
+                        detailsDiv.classList.add('taskDetails');
+                        detailsDiv.textContent = feature.attributes.TaskID + "- " + feature.attributes.TaskDescription;
+
+                        let taskItemDiv = document.createElement('div');
+                        taskItemDiv.classList.add('taskItem');
+                        taskItemDiv.appendChild(detailsDiv);
+                        taskItemDiv.appendChild(checkbox);
+
+                        listContainer.appendChild(taskItemDiv);
+                    }
+                }
+            }
+
+
+        });
+    </script>
+</head>
+
+<body>
+    <div id="listContainer"></div>
+</body>
+
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+    <div id="drop_zone" style="width:300px; height:300px; border:2px dashed #ccc; line-height:300px; text-align:center;">Drop files here</div>
+    <output id="list"></output>
+
+    <script>
+        function handleFileSelect(evt) {
+            evt.stopPropagation();
+            evt.preventDefault();
+
+            var files = evt.dataTransfer.files;
+
+            for (var i = 0, f; f = files[i]; i++) {
+                // Send the file to ArcGIS feature layer
+                // Assuming you have the objectID and the URL for the feature layer
+                var objectID = '1';
+                var layerURL = 'https://geoportal.nwd.usace.army.mil/g0arcgis/rest/services/REMIS_Contract_Renewals/FeatureServer/2';
+
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', `${layerURL}/${objectID}/addAttachment`, true);
+                xhr.setRequestHeader("Content-Type", "multipart/form-data");
+
+                var formData = new FormData();
+                formData.append('file', f, f.name); // append the file object directly, not an ArrayBuffer
+
+                xhr.send(formData);
+            }
+        }
+
+        function handleDragOver(evt) {
+            evt.stopPropagation();
+            evt.preventDefault();
+            evt.dataTransfer.dropEffect = 'copy';
+        }
+
+        var dropZone = document.getElementById('drop_zone');
+        dropZone.addEventListener('dragover', handleDragOver, false);
+        dropZone.addEventListener('drop', handleFileSelect, false);
+    </script>
+</body>
+
+</html>
