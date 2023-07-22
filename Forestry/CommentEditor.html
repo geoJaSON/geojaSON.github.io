@@ -3,14 +3,13 @@
 
 <head>
     <title>Simple HTML Text Editor</title>
-    <script src="https://cdn.ckeditor.com/ckeditor5/38.1.1/classic/ckeditor.js"></script>
     <script src="https://js.arcgis.com/4.21/"></script>
 </head>
 
 <body>
     PW Review #/ Amendment Comments / Changes
 
-    <div id="editor"></div>
+    <textarea id="editor" style="width: 100%; height: 300px;"></textarea>
 
     <button onclick="submitData()">Submit</button>
 
@@ -26,27 +25,14 @@
         let editorData = "";
         let objectID = null;
 
-        let editor;
+        let editor = document.querySelector('#editor');
 
         require(["esri/identity/IdentityManager", "esri/request", "dojo/domReady!"], function(IdentityManager, esriRequest) {
-            ClassicEditor.create(document.querySelector('#editor'), {})
-                .then(editorInstance => {
-                    editor = editorInstance;
-                    editor.editing.view.change(writer => {
-                        writer.setStyle('height', '300px', editor.editing.view.document.getRoot());
-                    });
+            fetchEditorData();
 
-                    fetchEditorData();
-
-                    editor.model.document.on('change:data', () => {
-                        editorData = editor.getData().replace(/<span style="color: rgb\((\d+,\s*\d+,\s*\d+)\);">(.*?)<\/span>/gi, '<span style="color:rgb($1);">$2</span>');
-                    });
-
-                    return editor;
-                })
-                .catch(error => {
-                    console.error(error);
-                });
+            editor.addEventListener('input', () => {
+                editorData = editor.value;
+            });
 
             function fetchEditorData() {
                 esriRequest(QUERY_API_URL, {
@@ -54,14 +40,14 @@
                     query: {
                         f: 'json',
                         where: "OBJECTID=" + oid,
-                        outFields: '*'
+                        outFields: 'OBJECTID, PWReview2Comments'
                     }
                 }).then(function(response) {
                     let data = response.data;
                     let attributeData = data.features[0].attributes.PWReview2Comments;
                     objectID = data.features[0].attributes.OBJECTID;
                     editorData = attributeData;
-                    editor.setData(attributeData);
+                    editor.value = attributeData;
                 });
             }
 
@@ -88,9 +74,12 @@
 
                 // Post data to REST API
                 esriRequest(UPDATE_API_URL, {
-                    method: 'post',
+                    method: "post",
                     responseType: 'json',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData.toString()
                 }).then(function(response) {
                     let data = response.data;
                     if (data.updateResults && data.updateResults[0].success) {
