@@ -167,23 +167,23 @@
                 // Get values from the form
                 const saw = document.getElementById('sawmill').value;
                 const bur = document.getElementById('bureau').value;
-                const loc = parseInt(document.getElementById('locat').value);
-                const domsent = parseInt(document.getElementById('domsent').value);
-                const domrec = parseInt(document.getElementById('domrec').value);
-                const metsent = parseInt(document.getElementById('metsent').value);
-                const metrec = parseInt(document.getElementById('metrec').value);
+                const loc = (document.getElementById('locat').value);
+                const domsent = Date.parse(document.getElementById('domsent').value);
+                const domrec = Date.parse(document.getElementById('domrec').value);
+                const metsent = Date.parse(document.getElementById('metsent').value);
+                const metrec = Date.parse(document.getElementById('metrec').value);
 
                 // Create features array
                 const features = [{
                     "attributes": {
                         "scaleContractNo": cid,
-                        "scaleContractNo": saw,
-                        "biddername": bur,
-                        "ScalingsawmillNo": loc,
-                        "unitbid": domsent,
-                        "biddeposit": domrec,
-                        "totaloffer": metsent,
-                        "AbsListNo": metrec,
+                        "SawmillDestination": saw,
+                        "ScalingBureau": bur,
+                        "ScaleLocation": loc,
+                        "DomesticDateSent": domsent,
+                        "DomesticDateRecieved": domrec,
+                        "MetalConDateSent": metsent,
+                        "MetalConDateRecieved": metrec,
                         "parentglobalid": pgid
                     }
                 }];
@@ -194,7 +194,7 @@
                 formData.append('features', JSON.stringify(features));
                 console.log(features);
                 // Send a POST request to your REST endpoint
-                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/8/addFeatures", {
+                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/12/addFeatures", {
                     method: "post",
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
