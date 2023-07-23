@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Data Input</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+    <script src="https://js.arcgis.com/4.21/"></script>
+    <style>
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        
+        html,
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+        
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 200px;
+            width: 100%;
+        }
+        
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .form-group2 {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .form-group3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            align-items: center;
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .submit-btn {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .submit-btn input {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .submit-btn input:hover {
+            background-color: #45a049;
+        }
+        
+        .checkbox-container input {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="dataForm">
+        <div class="form-group">
+            <input type="text" id="ContactBusinessName" name="ContactBusinessName" placeholder="Business Name">
+        </div>
+        <div class="form-group3">
+            <input type="text" id="ContactStreet1" name="ContactStreet1" placeholder="Street">
+            <input type="text" id="ContactStreet2" name="ContactStreet2" placeholder="Street 2">
+            <input type="text" id="ContactCity" name="ContactCity" placeholder="City">
+            <input type="text" id="ContactZip" name="ContactZip" placeholder="ZIP">
+        </div>
+        <div class="form-group3">
+            <input type="text" id="ContactName" name="ContactName" placeholder="POC">
+            <input type="text" id="ContactPhone" name="ContactPhone" placeholder="Phone">
+            <input type="text" id="ContactEmail" name="ContactEmail" placeholder="Email">
+        </div>
+        <br>
+        <div class="checkbox-container">
+            <input type="checkbox" id="LargeBusiness" name="LargeBusiness">
+            <label for="LargeBusiness">Large Business</label>
+        </div>
+        <div class="form-group">
+            <input type="text" id="ContactFedTaxID" name="ContactFedTaxID" placeholder="Federal Tax ID">
+            <input type="text" id="CEFMSDebtorID" name="CEFMSDebtorID" placeholder="CEFMS Deptor ID">
+        </div>
+        <br>Scaling Bureau
+        <select id="ScalingBureauName" name="ScalingBureauName">
+            <option value="None">None</option>
+        </select>
+        <input type="text" id="ScaleLocation" name="ScaleLocation" placeholder="Scale Location">
+
+        <br>
+        <br>Advertisement type
+
+        <div class="form-group">
+            <div class="checkbox-container">
+                <input type="checkbox" id="StandingTimberSales" name="StandingTimberSales">
+                <label for="show">Standing Timber Sales</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="SawlogDeckSales" name="SawlogDeckSales">
+                <label for="show">Sawlog Deck Sales</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="FirewoodSales" name="FirewoodSales">
+                <label for="show">Firewood Sales</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="BiomassSales" name="BiomassSales">
+                <label for="show">Biomass Sales</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="OregonSales" name="OregonSales">
+                <label for="show">Standing Timber Sales</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="OregonSales1Page" name="OregonSales1Page">
+                <label for="show">Sawlog Deck Sales</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="LibbyDamSales" name="LibbyDamSales">
+                <label for="show">Firewood Sales</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="LibbyDamSales1Page" name="LibbyDamSales1Page">
+                <label for="show">Biomass Sales</label>
+            </div>
+        </div>
+        <br>Contact type
+
+        <div class="form-group">
+            <div class="checkbox-container">
+                <input type="checkbox" id="Purchaser" name="Purchaser">
+                <label for="show">Purchaser</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="Sawmill" name="Sawmill">
+                <label for="show">Sawmill</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="ScalingBureau" name="ScalingBureau">
+                <label for="show">Scaling Bureau</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="BankInsuranceCo" name="BankInsuranceCo">
+                <label for="show">Bank/Insurance Co</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="RoadRockSource" name="RoadRockSource">
+                <label for="show">Road Rock Source</label>
+            </div>
+        </div>
+
+        <br>Products Processed
+        <select id="products" name="products">
+            <option value="None">None</option>
+            <option value="Firewood">Firewood</option>
+            <option value="Fish Logs">Fish Logs</option>
+            <option value="Hog Fuel">HogFuel</option>
+            <option value="Lumber">Lumber</option>
+            <option value="Paper">Paper</option>
+            <option value="Poles">Poles</option>
+            <option value="Pulp">Pulp</option>
+            <option value="ShakeFencing">ShakeFencing</option>
+            <option value="Slash">Slash</option>
+            <option value="Rock">Rock</option>
+            <option value="Scraps">Scraps</option>
+            <option value="Utility">Utility</option>
+            <option value="Veneer">Rock</option>
+        </select>
+        <br><br>
+
+        <div class="form-group1">
+            <textarea id="ContactComments" name="ContactComments" rows="4" placeholder="Comments"></textarea>
+        </div>
+        <div class="submit-btn">
+            <input type="submit" value="Submit New Contact">
+        </div>
+    </form>
+
+    <script>
+        let lat = 0
+        let lon = 0
+        let selectedBureau = ''; // Move this line here
+        let featureMap = new Map();
+
+
+        require(["esri/identity/IdentityManager", "esri/request", "dojo/domReady!", "esri/Map", "esri/views/MapView"],
+            function(IdentityManager, esriRequest) {
+                // Fetch the data when the document is ready
+                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/2/query", {
+                    responseType: "json",
+                    query: {
+                        where: "1=1",
+                        outFields: "*",
+                        f: "json"
+                    }
+
+                }).then(function(response) {
+                    // Get the input fields
+                    const streetField = document.getElementById('ContactStreet1');
+                    const cityField = document.getElementById('ContactCity');
+                    const zipField = document.getElementById('ContactZip');
+                    let debounceId; // Store the debounce ID
+
+                    function geocodeAddress() {
+                        clearTimeout(debounceId); // Clear the debounce timeout if it exists
+
+                        debounceId = setTimeout(function() { // Set a new debounce timeout
+                            const street = streetField.value;
+                            const city = cityField.value;
+                            const zip = zipField.value;
+
+                            // Check if all fields are filled
+                            if (street && city && zip) {
+                                const address = street + ' ' + city + ' ' + zip;
+
+                                // Prepare the URL to the geocoding service, making sure to URL encode the address
+                                const geocodeUrl = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&singleLine=${encodeURIComponent(address)}&outFields=Match_addr,Addr_type`;
+
+                                // Send a GET request to the geocoding service
+                                fetch(geocodeUrl)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        // The response will be a JSON object with a 'candidates' property that's an array of possible matches
+                                        // Each candidate has an 'address' property with the matched address and a 'location' property with the lat/long coordinates
+                                        // Here we're just using the first candidate, but in a real application you might want to handle multiple candidates
+                                        if (data.candidates.length > 0) {
+                                            var location = data.candidates[0].location;
+                                            lat = location.y; // Update lat variable
+                                            lon = location.x; // Update lon variable
+                                            console.log('Geocoded address:', location);
+                                        }
+                                    })
+                                    .catch(console.error);
+                            } else {
+                                console.log("All fields are not filled");
+                            }
+                        }, 1000); // Set the debounce time to 1 second (1000 milliseconds)
+                    }
+
+                    // Add 'input' event listener to the fields
+                    streetField.addEventListener('input', geocodeAddress);
+                    cityField.addEventListener('input', geocodeAddress);
+                    zipField.addEventListener('input', geocodeAddress);
+
+
+
+
+
+                    document.getElementById('dataForm').addEventListener('submit', function(event) {
+                        // Prevent the default form submit action
+                        event.preventDefault();
+                        // Get values from the form
+                        const ContactBusinessName = document.getElementById('ContactBusinessName').value;
+                        const ContactStreet1 = document.getElementById('ContactStreet1').value;
+                        const ContactStreet2 = document.getElementById('ContactStreet2').value;
+                        const ContactCity = document.getElementById('ContactCity').value;
+                        const ContactZip = document.getElementById('ContactZip').value;
+                        const ContactName = document.getElementById('ContactName').value;
+                        const ContactPhone = document.getElementById('ContactPhone').value;
+                        const ContactEmail = document.getElementById('ContactEmail').value;
+                        const LargeBusiness = document.getElementById('LargeBusiness').checked ? 'Yes' : 'No';
+                        const ContactFedTaxID = document.getElementById('ContactFedTaxID').value;
+                        const CEFMSDebtorID = document.getElementById('CEFMSDebtorID').value;
+                        const ScalingBureauName = document.getElementById('ScalingBureauName').value;
+                        const StandingTimberSales = document.getElementById('StandingTimberSales').checked ? 'Yes' : 'No';
+                        const SawlogDeckSales = document.getElementById('SawlogDeckSales').checked ? 'Yes' : 'No';
+                        const FirewoodSales = document.getElementById('FirewoodSales').checked ? 'Yes' : 'No';
+                        const BiomassSales = document.getElementById('BiomassSales').checked ? 'Yes' : 'No';
+                        const OregonSales = document.getElementById('OregonSales').checked ? 'Yes' : 'No';
+                        const OregonSales1Page = document.getElementById('OregonSales1Page').checked ? 'Yes' : 'No';
+                        const LibbyDamSales = document.getElementById('LibbyDamSales').checked ? 'Yes' : 'No';
+                        const LibbyDamSales1Page = document.getElementById('LibbyDamSales1Page').checked ? 'Yes' : 'No';
+                        const Purchaser = document.getElementById('Purchaser').checked ? 'Yes' : 'No';
+                        const Sawmill = document.getElementById('Sawmill').checked ? 'Yes' : 'No';
+                        const ScalingBureau = document.getElementById('ScalingBureau').checked ? 'Yes' : 'No';
+                        const BankInsuranceCo = document.getElementById('BankInsuranceCo').checked ? 'Yes' : 'No';
+                        const RoadRockSource = document.getElementById('RoadRockSource').checked ? 'Yes' : 'No';
+                        const products = document.getElementById('products').value;
+                        const ContactComments = document.getElementById('ContactComments').value;
+                        const ScaleLocation = document.getElementById('ScaleLocation').value;
+
+                        // Create features array
+                        const features = [{
+                            "attributes": {
+                                "ContactBusinessName": ContactBusinessName,
+                                "ContactStreet1": ContactStreet1,
+                                "ContactStreet2": ContactStreet2,
+                                "ContactCity": ContactCity,
+                                "ContactZip": ContactZip,
+                                "ContactName": ContactName,
+                                "ContactPhone": ContactPhone,
+                                "ContactEmail": ContactEmail,
+                                "LargeBusiness": LargeBusiness,
+                                "ContactFedTaxID": ContactFedTaxID,
+                                "CEFMSDebtorID": CEFMSDebtorID,
+                                "ScalingBureauName": ScalingBureauName,
+                                "StandingTimberSales": StandingTimberSales,
+                                "SawlogDeckSales": SawlogDeckSales,
+                                "FirewoodSales": FirewoodSales,
+                                "BiomassSales": BiomassSales,
+                                "OregonSales": OregonSales,
+                                "OregonSales_1Page": OregonSales1Page,
+                                "LibbyDamSales": LibbyDamSales,
+                                "LibbyDamSales_1Page": LibbyDamSales1Page,
+                                "Purchaser": Purchaser,
+                                "Sawmill": Sawmill,
+                                "ScalingBureauName": ScalingBureau,
+                                "BankInsuranceCo": BankInsuranceCo,
+                                "RoadRockSource": RoadRockSource,
+                                "ProductProcessed": products,
+                                "ScaleLocation": ScaleLocation,
+                                "ContactComments": ContactComments
+                            },
+                            "geometry": {
+                                "x": lon,
+                                "y": lat,
+                                "spatialReference": {
+                                    "wkid": 4326
+                                }
+                            }
+                        }];
+
+
+
+                        // Convert features to URL-encoded string
+                        const formData = new URLSearchParams();
+                        formData.append('f', 'json');
+                        formData.append('features', JSON.stringify(features));
+                        console.log(features);
+                        // Send a POST request to your REST endpoint
+                        esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/2/addFeatures", {
+                            method: "post",
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: formData.toString()
+                        }).then(function(response) {
+                            console.log(response.data);
+                        }).catch(function(error) {
+                            console.error(error);
+                        });
+                    });
+                });
+            });
+    </script>
+    <div id="viewDiv"></div>
+</body>
