@@ -24,19 +24,12 @@
             font-size: 12px;
         }
         
-        #viewDiv {
-            padding: 0;
-            margin: 0;
-            height: 200px;
-            width: 100%;
-        }
-        
         .form-group {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 5px;
+            margin-bottom: 5px;
             align-items: center;
-            margin-bottom: 10px;
         }
         
         .form-group2 {
@@ -45,13 +38,6 @@
             gap: 5px;
             align-items: center;
             margin-bottom: 10px;
-        }
-        
-        .form-group3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
-            align-items: center;
         }
         
         .checkbox-container {
@@ -85,12 +71,12 @@
 
 <body>
     <form id="dataForm">
-        <div class="form-group3">
+        <div class="form-group">
             <input type="text" id="SignerFirstName" name="SignerFirstName" placeholder="First Name">
             <input type="text" id="SignerMiddleInitial" name="SignerMiddleInitial" placeholder="Middle Initial">
             <input type="text" id="SignerLastName" name="SignerLastName" placeholder="Last Name">
         </div>
-        <div class="form-group3">
+        <div class="form-group2">
             <input type="text" id="SignerTitle" name="SignerTitle" placeholder="Title">
             <input type="text" id="SignerShortTitle" name="SignerShortTitle" placeholder="Short Title">
             <input type="text" id="SignerCEFMSID" name="SignerCEFMSID" placeholder="CEFMS ID">
@@ -108,7 +94,7 @@
         <br>
 
         <div class="submit-btn">
-            <input type="submit" value="Submit New Contact">
+            <input type="submit" value="Submit New Signer">
         </div>
     </form>
 
@@ -176,5 +162,4 @@
                 });
             });
     </script>
-    <div id="viewDiv"></div>
 </body>
