@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Data Input</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+    <script src="https://js.arcgis.com/4.21/"></script>
+    <style>
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        
+        html,
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+        
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 200px;
+            width: 100%;
+        }
+        
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .form-group2 {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .form-group3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            align-items: center;
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .submit-btn {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .submit-btn input {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .submit-btn input:hover {
+            background-color: #45a049;
+        }
+        
+        .checkbox-container input {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="dataForm">
+        <div class="form-group3">
+            <input type="text" id="SignerFirstName" name="SignerFirstName" placeholder="First Name">
+            <input type="text" id="SignerMiddleInitial" name="SignerMiddleInitial" placeholder="Middle Initial">
+            <input type="text" id="SignerLastName" name="SignerLastName" placeholder="Last Name">
+        </div>
+        <div class="form-group3">
+            <input type="text" id="SignerTitle" name="SignerTitle" placeholder="Title">
+            <input type="text" id="SignerShortTitle" name="SignerShortTitle" placeholder="Short Title">
+            <input type="text" id="SignerCEFMSID" name="SignerCEFMSID" placeholder="CEFMS ID">
+        </div>
+        <br>
+        <div class="checkbox-container">
+            <input type="checkbox" id="SignerRECO" name="SignerRECO">
+            <label for="SignerRECO">Is RECO?</label>
+        </div>
+        <div class="checkbox-container">
+            <input type="checkbox" id="isTSS" name="isTSS">
+            <label for="isTSS">Is TSS?</label>
+        </div>
+
+        <br>
+
+        <div class="submit-btn">
+            <input type="submit" value="Submit New Contact">
+        </div>
+    </form>
+
+    <script>
+        require(["esri/identity/IdentityManager", "esri/request", "dojo/domReady!", "esri/Map", "esri/views/MapView"],
+            function(IdentityManager, esriRequest) {
+                // Fetch the data when the document is ready
+                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/2/query", {
+                    responseType: "json",
+                    query: {
+                        where: "1=1",
+                        outFields: "*",
+                        f: "json"
+                    }
+
+                }).then(function(response) {
+                    document.getElementById('dataForm').addEventListener('submit', function(event) {
+                        // Prevent the default form submit action
+                        event.preventDefault();
+                        // Get values from the form
+                        const SignerFirstName = document.getElementById('SignerFirstName').value;
+                        const SignerMiddleInitial = document.getElementById('SignerMiddleInitial').value;
+                        const SignerLastName = document.getElementById('SignerLastName').value;
+                        const SignerTitle = document.getElementById('SignerTitle').value;
+                        const SignerShortTitle = document.getElementById('SignerShortTitle').value;
+                        const SignerCEFMSID = document.getElementById('SignerCEFMSID').value;
+                        const isTSS = document.getElementById('isTSS').checked ? 'Yes' : 'No';
+                        const SignerRECO = document.getElementById('SignerRECO').checked ? 'Real Estate Contracting Officer' : '';
+
+                        // Create features array
+                        const features = [{
+                            "attributes": {
+                                "SignerFirstName": SignerFirstName,
+                                "SignerMiddleInitial": SignerMiddleInitial,
+                                "SignerLastName": SignerLastName,
+                                "SignerTitle": SignerTitle,
+                                "SignerShortTitle": SignerShortTitle,
+                                "SignerRECO": SignerRECO,
+                                "Active_InactiveSigner": "Active",
+                                "isTSS": isTSS,
+                                "SignerCEFMSID": SignerCEFMSID
+                            }
+                        }];
+
+
+
+                        // Convert features to URL-encoded string
+                        const formData = new URLSearchParams();
+                        formData.append('f', 'json');
+                        formData.append('features', JSON.stringify(features));
+                        console.log(features);
+                        // Send a POST request to your REST endpoint
+                        esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/2/addFeatures", {
+                            method: "post",
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: formData.toString()
+                        }).then(function(response) {
+                            console.log(response.data);
+                        }).catch(function(error) {
+                            console.error(error);
+                        });
+                    });
+                });
+            });
+    </script>
+    <div id="viewDiv"></div>
+</body>
