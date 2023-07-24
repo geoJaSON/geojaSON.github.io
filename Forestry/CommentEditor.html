@@ -4,14 +4,61 @@
 <head>
     <title>Simple HTML Text Editor</title>
     <script src="https://js.arcgis.com/4.21/"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
 </head>
 
 <body>
-    PW Review #/ Amendment Comments / Changes
 
-    <textarea id="editor" style="width: 100%; height: 300px;"></textarea>
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f2f2f2;
+            font-family: Arial, sans-serif;
+        }
+        
+        .editor-container {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            border-radius: 15px;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        #message {
+            margin-top: 20px;
+        }
+        
+        .submit-btn {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .submit-btn input {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .submit-btn input:hover {
+            background-color: #45a049;
+        }
+    </style>
 
-    <button onclick="submitData()">Submit</button>
+    <div class="container">
+        <div class="editor-container col-md-8 offset-md-2">
+            <h2>PW Review #/ Amendment Comments / Changes</h2>
+            <textarea id="editor" class="form-control" style="height: 300px;"></textarea>
+            <div id="message"></div>
+        </div>
+        <div class="submit-btn">
+            <input type="submit" value="Submit New Comment">
+        </div>
+    </div>
+
 
     <div id="message"></div>
 

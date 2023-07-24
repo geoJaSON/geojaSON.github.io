@@ -23,6 +23,23 @@
         .form-row-full textarea {
             width: 100%;
         }
+        
+        .submit-btn {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .submit-btn input {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .submit-btn input:hover {
+            background-color: #45a049;
+        }
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
@@ -87,7 +104,9 @@
 
             <textarea id="comments" name="comments" rows="2" placeholder="Comments"></textarea>
         </div>
-        <input type="submit" value="Submit New Certificate">
+        <div class="submit-btn">
+            <input type="submit" value="Submit New Certificate">
+        </div>
     </form>
     <script>
         let selectedAddress = ''; // Move this line here

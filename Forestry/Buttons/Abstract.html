@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Print Abstract of Bids</title>
+    <script src="https://js.arcgis.com/4.20/"></script>
+    <script>
+        function executeGeoprocessing(serviceURL) {
+            var outputFileUrl;
+            var params = {};
+            var urlParams = new URLSearchParams(window.location.search);
+            params.contract = urlParams.get('contract');
+            require([
+                "esri/tasks/Geoprocessor",
+                "esri/rest/support/JobInfo"
+            ], function(Geoprocessor, JobInfo) {
+                var gp = new Geoprocessor(serviceURL);
+                gp.submitJob(params).then((jobInfo) => {
+                    const jobid = jobInfo.jobId;
+                    console.log("ArcGIS Server job ID: ", jobid);
+
+                    const options = {
+                        interval: 1500,
+                        statusCallback: (j) => {
+                            console.log("Job Status: ", j.jobStatus);
+                        }
+                    };
+
+                    jobInfo.waitForJobCompletion(options).then(() => {
+                        jobInfo.fetchResultData('outfile').then(function(result) {
+                            outputFileUrl = result.value.url;
+                            window.open(outputFileUrl, "_blank");
+                        });
+                    });
+                });
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function(event) {
+            var link1 = document.getElementById("run-geoprocessing-tool-1");
+            link1.addEventListener("click", function(event) {
+                event.preventDefault();
+                executeGeoprocessing('https://arcportal-ucop-corps.usace.army.mil/gp/rest/services/Service1/GPServer/Service1');
+            });
+
+            var link2 = document.getElementById("run-geoprocessing-tool-2");
+            link2.addEventListener("click", function(event) {
+                event.preventDefault();
+                executeGeoprocessing('https://arcportal-ucop-corps.usace.army.mil/gp/rest/services/Service2/GPServer/Service2');
+            });
+            var link1 = document.getElementById("run-geoprocessing-tool-3");
+            link1.addEventListener("click", function(event) {
+                event.preventDefault();
+                executeGeoprocessing('https://arcportal-ucop-corps.usace.army.mil/gp/rest/services/Service1/GPServer/Service1');
+            });
+
+            var link2 = document.getElementById("run-geoprocessing-tool-4");
+            link2.addEventListener("click", function(event) {
+                event.preventDefault();
+                executeGeoprocessing('https://arcportal-ucop-corps.usace.army.mil/gp/rest/services/Service2/GPServer/Service2');
+            });
+
+
+            // Add similar blocks for more buttons as required
+        });
+    </script>
+</head>
+<style>
+    .run-geoprocessing-tool {
+        display: inline-block;
+        background-color: #7b8361;
+        color: white;
+        padding: 5px 10px;
+        text-align: center;
+        text-decoration: none;
+        font-size: 12px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border: none;
+        border: 1px solid black;
+        /* Added black border */
+        transition: font-weight 0.3s;
+        /* Added transition for font-weight */
+    }
+    
+    .run-geoprocessing-tool:hover {
+        border: 2px solid black;
+        /* Font goes bold on hover */
+    }
+    
+    body {
+        font-family: Arial, sans-serif;
+    }
+    
+    .button-container {
+        display: flex;
+        justify-content: center;
+    }
+</style>
+
+<body>
+    <div class="button-container">
+        <a href="#" id="run-geoprocessing-tool-1" class="run-geoprocessing-tool">Abstract (Scaled)</a>
+        <a href="#" id="run-geoprocessing-tool-2" class="run-geoprocessing-tool">Abstract (Lump Sum)</a>
+        <a href="#" id="run-geoprocessing-tool-3" class="run-geoprocessing-tool">Check Return Letter</a>
+        <a href="#" id="run-geoprocessing-tool-4" class="run-geoprocessing-tool">No Bids Returned Statement</a>
+    </div>
+</body>
+
+
+</html>

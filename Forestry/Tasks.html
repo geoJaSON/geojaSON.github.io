@@ -5,9 +5,15 @@
     <meta charset="utf-8">
     <title>Task List with Checkboxes</title>
     <style>
+        body {
+            padding: 20px;
+            background-color: #f2f2f2;
+            font-family: Arial, sans-serif;
+        }
+        
         #listContainer {
-            width: 50%;
-            margin: auto;
+            border-radius: 15px;
+            background-color: #fff;
             padding: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
@@ -15,6 +21,7 @@
         #listContainer .taskType {
             margin-top: 20px;
             font-weight: bold;
+            color: #1a73e8;
         }
         
         #listContainer .taskItem {
@@ -28,7 +35,13 @@
         #listContainer .taskItem .taskDetails {
             flex-grow: 1;
         }
+        
+        .checkbox-container {
+            padding: 5px;
+        }
     </style>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
     <link rel="stylesheet" href="https://js.arcgis.com/4.21/esri/themes/light/main.css">
     <script src="https://js.arcgis.com/4.21/"></script>
     <script>
@@ -141,7 +154,9 @@
 </head>
 
 <body>
-    <div id="listContainer"></div>
+    <div class="container">
+        <div id="listContainer" class="col-md-8 offset-md-2"></div>
+    </div>
 </body>
 
 </html>

@@ -30,7 +30,20 @@
         }
         
         .submit-btn {
-            grid-column: span 2;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .submit-btn input {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .submit-btn input:hover {
+            background-color: #45a049;
         }
         
         .form-group2 label {
@@ -85,7 +98,7 @@
             <input type="date" id="metrec" name="metrec" placeholder="Metal Con Date Received">
         </div>
         <div class="submit-btn">
-            <input type="submit" value="Submit New Bid">
+            <input type="submit" value="Submit">
         </div>
     </form>
 
