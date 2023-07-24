@@ -183,12 +183,18 @@
 
             <div class="form-group2">
 
-                <input type="text" id="TimberSalesSpecialist" name="TimberSalesSpecialist" placeholder="Timber Sales Specialist">
-                <input type="text" id="purchaser" name="purchaser" placeholder="Purchaser">
+                <select id="TimberSalesSpecialist" name="TimberSalesSpecialist">
+                    <!-- Options will be filled by JavaScript -->
+                </select>
+                <select id="purchaser" name="purchaser">
+                    <!-- Options will be filled by JavaScript -->
+                </select>
                 <input type="text" id="PurchaserPOC" name="PurchaserPOC" placeholder="Purchaser POC">
                 <input type="text" id="PurchaserPOCPhone" name="PurchaserPOCPhone" placeholder="Purchaser POC Phone">
                 <input type="text" id="PurchaserPOCEmail" name="PurchaserPOCEmail" placeholder="Purchaser POC Email">
-                <input type="text" id="logger" name="logger" placeholder="Logger">
+                <select id="logger" name="logger">
+                    <!-- Options will be filled by JavaScript -->
+                </select>
             </div>
             <div class="form-group">
 
@@ -217,8 +223,123 @@
     </form>
 
     <script>
-        require(["esri/identity/IdentityManager", "esri/request", "dojo/domReady!", "esri/Map", "esri/views/MapView"],
+        let featureMap = new Map();
+        require(["esri/identity/IdentityManager", "esri/request", "dojo/domReady!"],
+
+
             function(IdentityManager, esriRequest) {
+                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/2/query", {
+                    responseType: "json",
+                    query: {
+                        where: "Purchaser='Yes'",
+                        outFields: "ContactBusinessName, ContactFirstName, ContactLastName, ContactPhone, ContactEMail1",
+                        f: "json"
+                    }
+
+                }).then(function(response) {
+                    const purchaserSelect = document.getElementById('purchaser');
+                    const loggerSelect = document.getElementById('logger');
+
+                    purchaserSelect.innerHTML = '';
+                    loggerSelect.innerHTML = '';
+                    // Sort and iterate through features
+                    const sortedFeatures = response.data.features.sort((a, b) => {
+                        if (a.attributes.ContactBusinessName < b.attributes.ContactBusinessName) return -1;
+                        if (a.attributes.ContactBusinessName > b.attributes.ContactBusinessName) return 1;
+                        return 0;
+                    });
+                    sortedFeatures.forEach(feature => {
+                        const option = document.createElement('option');
+                        option.value = feature.attributes.ContactBusinessName;
+                        option.textContent = feature.attributes.ContactBusinessName;
+
+                        // Store the feature in the map
+                        featureMap.set(option.value, feature);
+
+                        // Append the new option to the select
+                        purchaserSelect.appendChild(option);
+                    });
+                    sortedFeatures.forEach(feature => {
+                        const option = document.createElement('option');
+                        option.value = feature.attributes.ContactBusinessName;
+                        option.textContent = feature.attributes.ContactBusinessName;
+
+                        // Store the feature in the map
+                        featureMap.set(option.value, feature);
+
+                        // Append the new option to the select
+                        loggerSelect.appendChild(option);
+                    });
+
+                    document.getElementById('purchaser').addEventListener('change', function(e) {
+                        // Get the feature from the map using the selected value
+                        const selectedFeature = featureMap.get(e.target.value);
+
+                        if (selectedFeature) {
+                            selectedPOC = selectedFeature.attributes.ContactFirstName + ' ' + selectedFeature.attributes.ContactLastName;
+                            document.getElementById('purchaser').value = selectedPOC;
+                            console.log('Selected POC:', selectedPOC);
+
+                            selectedPhone = selectedFeature.attributes.ContactPhone;
+                            document.getElementById('PurchaserPOCPhone').value = selectedPhone;
+                            console.log('Selected Phone:', selectedPhone);
+
+                            selectedEmail = selectedFeature.attributes.ContactEMail1;
+                            document.getElementById('PurchaserPOCEmail').value = selectedEmail;
+                            console.log('Selected Email:', selectedEmail);
+                        }
+                    });
+
+                    // Convert the select box into a searchable select box with Select2
+                    $(purchaserSelect).select2({
+                        width: 'resolve' // need to override the changed width by Select2
+                    }).on('select2:select', function(e) {
+                        // Get the feature from the map using the selected value
+                        const selectedFeature = featureMap.get(e.target.value);
+
+                        if (selectedFeature) {
+                            selectedPOC = selectedFeature.attributes.ContactFirstName + ' ' + selectedFeature.attributes.ContactLastName;
+                            document.getElementById('PurchaserPOC').value = selectedPOC;
+                            console.log('Selected POC:', selectedPOC);
+
+                            selectedPhone = selectedFeature.attributes.ContactPhone;
+                            document.getElementById('PurchaserPOCPhone').value = selectedPhone;
+                            console.log('Selected Phone:', selectedPhone);
+
+                            selectedEmail = selectedFeature.attributes.ContactEMail1;
+                            document.getElementById('PurchaserPOCEmail').value = selectedEmail;
+                            console.log('Selected Email:', selectedEmail);
+                        }
+                    });
+                }).catch(function(error) {
+                    console.error(error);
+                });
+
+                function fetchSignerNames() {
+                    return esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/6/query", {
+                        responseType: "json",
+                        query: {
+                            where: "isTss='Yes'",
+                            outFields: "SignerName",
+                            returnDistinctValues: true,
+                            f: "json"
+                        }
+                    }).then(function(response) {
+                        const signerNames = response.data.features.map(feature => feature.attributes.SignerName);
+                        const selectElement = document.getElementById('TimberSalesSpecialist');
+                        signerNames.forEach(signerName => {
+                            const optionElement = document.createElement('option');
+                            optionElement.text = signerName;
+                            optionElement.value = signerName;
+                            selectElement.add(optionElement);
+                        });
+                    }).catch(function(error) {
+                        console.error(error);
+                    });
+                }
+
+                // Call fetchSignerNames when the script loads
+                fetchSignerNames();
                 // Get objectid from URL parameters
                 const urlParams = new URLSearchParams(window.location.search);
                 const objectId = urlParams.get('oid');
