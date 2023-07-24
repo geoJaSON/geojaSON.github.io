@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Data Input</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+    <script src="https://js.arcgis.com/4.21/"></script>
+    <style>
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        
+        html,
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+        
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 5px;
+            margin-bottom: 5px;
+            align-items: center;
+        }
+        
+        .form-group2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .form-group3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .form-group4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .submit-btn {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .submit-btn input {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .submit-btn input:hover {
+            background-color: #45a049;
+        }
+        
+        .checkbox-container input {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="dataForm">
+        <fieldset>
+            <legend>Contract Details</legend>
+            <div class="form-group3">
+
+                <input type="text" id="ContractTitle" name="ContractTitle" placeholder="Contract Title" required>
+                <input type="text" id="ContractID" name="ContractID" placeholder="Contract ID" required>
+                <input type="text" id="InvitationID" name="InvitationID" placeholder="Invitation ID">
+            </div>
+            <label>Military or Civil</label>
+            <div>
+                <select name="militaryorcivilcode" id="militaryorcivilcode">
+                    <option value="A">Military</option>
+                    <option value="W">Civil</option>
+                </select>
+
+            </div>
+            <label>Primary Species</label>
+            <select name="PrimarySpecies" id="PrimarySpecies">
+                <option value="Alder">Alder</option>
+                <option value="Chamarecyparis">Chamarecyparis</option>
+                <option value="Cottonwood">Cottonwood</option>
+                <option value="Douglas Fir">Douglas Fir</option>
+                <option value="Grand Fir">Grand Fir</option>
+                <option value="Pacific Madrona">Pacific Madrona</option>
+                <option value="Pondarosa Pine">Pondarosa Pine</option>
+                <option value="Red Cedar">Red Cedar</option>
+                <option value="White Fir">White Fir</option>
+                <option value="White Oak">White Oak</option>
+                <option value="Woody Biomass">Woody Biomass</option>
+            </select>
+            <div class="form-group4">
+                <label for="LoggingStartDate">Logging Start Date</label>
+                <input type="date" id="LoggingStartDate" name="LoggingStartDate" placeholder="Logging Start Date">
+                <label for="LoggingEndDate">Logging End Date</label>
+                <input type="date" id="LoggingEndDate" name="LoggingEndDate" placeholder="Logging End Date">
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>Location Details</legend>
+            <div class="form-group4">
+                <input type="text" id="installation" name="installation" placeholder="Installation">
+                <input type="text" id="TrainingArea" name="TrainingArea" placeholder="Training Area">
+                <input type="text" id="county" name="county" placeholder="County">
+                <input type="text" id="TownshipRangeSection" name="TownshipRangeSection" placeholder="Township Range Section">
+                <input type="text" id="Latitude" name="Latitude" placeholder="Latitude">
+                <input type="text" id="Longitude" name="Longitude" placeholder="Longitude">
+                <input type="text" id="grid" name="grid" placeholder="Grid">
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>Contract Type and Status</legend>
+            <label for="ContractType">Contract Type</label>
+            <select name="ContractType" id="ContractType">
+                <option value="Timber">Timber</option>
+                <option value="Salvage">Salvage</option>
+                <option value="Firewood (Contract)">Firewood (Contract)</option>
+                <option value="Construction-Related">Construction-Related</option>
+                <option value="Training & Range Improvement">Training & Range Improvement</option>
+                <option value="Ecological/Restoration">Ecological/Restoration</option>
+                <option value="Wildlife/Habitat Improvement">Wildlife/Habitat Improvement</option>
+                <option value="Firewood (Permit)">Firewood (Permit)</option>
+                <option value="Obstruction Removal">Obstruction Removal</option>
+                <option value="WA National Guard">WA National Guard</option>
+                <option value="Right of Way Harvest">Right of Way Harvest</option>
+                <option value="Recreation Enhancement">Recreation Enhancement</option>
+            </select>
+
+            <label>Contract Status</label>
+            <div>
+                <select name="SalesContractStatus" id="SalesContractStatus">
+                    <option value="Active-Logging">Active-Logging</option>
+                    <option value="Active-On Hold">Active-On Hold</option>
+                    <option value="Closed">Closed</option>
+                    <option value="Finalizing">Finalizing</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Planning">Planning</option>
+                    <option value="Rescinded">Rescinded</option>
+                    <option value="Z-Other">Z-Other</option>
+                </select>
+                <label>Declared/Supplemental</label>
+                <div>
+                    <input type="radio" name="Declared_Supplemental" value="Declared">
+                    <label for="Declared_Supplemental">Declared</label>
+
+                    <input type="radio" name="Declared_Supplemental" value="Supplemental">
+                    <label for="Declared_Supplemental">Supplemental</label>
+                </div>
+        </fieldset>
+
+        </div>
+        <fieldset>
+            <legend>POC Information</legend>
+
+            <div class="form-group2">
+
+                <input type="text" id="TimberSalesSpecialist" name="TimberSalesSpecialist" placeholder="Timber Sales Specialist">
+                <input type="text" id="purchaser" name="purchaser" placeholder="Purchaser">
+                <input type="text" id="PurchaserPOC" name="PurchaserPOC" placeholder="Purchaser POC">
+                <input type="text" id="PurchaserPOCPhone" name="PurchaserPOCPhone" placeholder="Purchaser POC Phone">
+                <input type="text" id="PurchaserPOCEmail" name="PurchaserPOCEmail" placeholder="Purchaser POC Email">
+                <input type="text" id="logger" name="logger" placeholder="Logger">
+            </div>
+            <div class="form-group">
+
+            </div>
+
+            <div class="form-group2">
+
+                <label>Unit of Measurement</label>
+                <div>
+                    <input type="radio" id="Cords" name="UnitOfMeasurement" value="Cords">
+                    <label for="Cords">Cords</label>
+
+                    <input type="radio" id="MBF" name="UnitOfMeasurement" value="MBF">
+                    <label for="MBF">MBF</label>
+
+                    <input type="radio" id="Tons" name="UnitOfMeasurement" value="Tons">
+                    <label for="Tons">Tons</label>
+                </div>
+                <input type="number" id="ContractAcres" name="ContractAcres" placeholder="Contract Acres">
+            </div>
+
+            <div class="submit-btn">
+                <input type="submit" value="Submit Edits">
+            </div>
+        </fieldset>
+    </form>
+
+    <script>
+        require(["esri/identity/IdentityManager", "esri/request", "dojo/domReady!", "esri/Map", "esri/views/MapView"],
+            function(IdentityManager, esriRequest) {
+                // Get objectid from URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const objectId = urlParams.get('oid');
+
+                function formatUnixTimestamp(timestamp) {
+                    // Create a new Date object
+                    const date = new Date(timestamp);
+
+                    // Extract the date components
+                    const year = date.getFullYear();
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // months are 0-indexed
+                    const day = date.getDate().toString().padStart(2, '0');
+
+                    // Format the date string
+                    return `${year}-${month}-${day}`;
+                }
+
+                // Fetch the data using the objectId
+                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/0/query", {
+                    responseType: "json",
+                    query: {
+                        where: `OBJECTID=${objectId}`,
+                        outFields: "*",
+                        f: "json"
+                    }
+
+                }).then(function(response) {
+                    // Once we receive the data, populate the form fields
+                    const attributes = response.data.features[0].attributes;
+                    for (const attribute in attributes) {
+                        const formField = document.getElementById(attribute);
+                        if (formField) {
+                            if (formField.type === 'date') {
+                                // Convert the UNIX timestamp to a date string for date fields
+                                formField.value = formatUnixTimestamp(attributes[attribute]);
+                            } else {
+                                formField.value = attributes[attribute];
+                            }
+                        }
+                    }
+
+
+                    // Prepare attributes object for update
+                    const updateAttributes = {...attributes
+                    };
+
+                    // Add an input event listener to all input fields
+                    Array.from(document.querySelectorAll('input, select')).forEach((element) => {
+                        element.addEventListener('input', function(event) {
+                            // Update the updateAttributes object when a field changes
+                            updateAttributes[event.target.id] = event.target.value;
+                        });
+                    });
+
+                    // Listen for form submit event
+                    document.getElementById('dataForm').addEventListener('submit', function(event) {
+                        // Prevent the default form submit action
+                        event.preventDefault();
+
+                        // Create features array
+                        const features = [{
+                            "attributes": updateAttributes
+                        }];
+
+                        // Convert features to URL-encoded string
+                        const formData = new URLSearchParams();
+                        formData.append('f', 'json');
+                        formData.append('features', JSON.stringify(features));
+
+                        // Send a POST request to your REST endpoint
+                        esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/0/applyEdits", {
+                            method: "post",
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: formData.toString()
+                        }).then(function(response) {
+                            console.log(response.data);
+                        }).catch(function(error) {
+                            console.error(error);
+                        });
+                    });
+                });
+            });
+    </script>
+
+
+</body>
+
+</html>
