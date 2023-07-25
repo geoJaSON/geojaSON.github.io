@@ -224,156 +224,107 @@
 
     <script>
         let featureMap = new Map();
-        require(["esri/identity/IdentityManager", "esri/request", "dojo/domReady!"],
 
+        require([
+            "esri/identity/IdentityManager",
+            "esri/request",
+            "dojo/domReady!"
+        ], function(IdentityManager, esriRequest) {
+            const purchaserRequest = esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/2/query", {
+                responseType: "json",
+                query: {
+                    where: "Purchaser='Yes'",
+                    outFields: "ContactBusinessName, ContactFirstName, ContactLastName, ContactPhone, ContactEMail1",
+                    f: "json"
+                }
+            });
 
-            function(IdentityManager, esriRequest) {
-                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/2/query", {
-                    responseType: "json",
-                    query: {
-                        where: "Purchaser='Yes'",
-                        outFields: "ContactBusinessName, ContactFirstName, ContactLastName, ContactPhone, ContactEMail1",
-                        f: "json"
-                    }
+            const signerNamesRequest = esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/6/query", {
+                responseType: "json",
+                query: {
+                    where: "isTss='Yes'",
+                    outFields: "SignerName",
+                    returnDistinctValues: true,
+                    f: "json"
+                }
+            });
 
-                }).then(function(response) {
+            // Get objectid from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const objectId = urlParams.get('oid');
+
+            const dataFetchRequest = esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/0/query", {
+                responseType: "json",
+                query: {
+                    where: `OBJECTID=${objectId}`,
+                    outFields: "*",
+                    f: "json"
+                }
+            });
+
+            function formatUnixTimestamp(timestamp) {
+                // Create a new Date object
+                const date = new Date(timestamp);
+
+                // Extract the date components
+                const year = date.getFullYear();
+                const month = (date.getMonth() + 1).toString().padStart(2, '0'); // months are 0-indexed
+                const day = date.getDate().toString().padStart(2, '0');
+
+                // Format the date string
+                return `${year}-${month}-${day}`;
+            }
+            Promise.all([purchaserRequest, signerNamesRequest, dataFetchRequest])
+                .then(function([purchaserResponse, signerNamesResponse, dataFetchResponse]) {
+                    // Handle the purchaser response
                     const purchaserSelect = document.getElementById('purchaser');
                     const loggerSelect = document.getElementById('logger');
 
                     purchaserSelect.innerHTML = '';
                     loggerSelect.innerHTML = '';
-                    // Sort and iterate through features
-                    const sortedFeatures = response.data.features.sort((a, b) => {
+
+                    const sortedFeatures = purchaserResponse.data.features.sort((a, b) => {
                         if (a.attributes.ContactBusinessName < b.attributes.ContactBusinessName) return -1;
                         if (a.attributes.ContactBusinessName > b.attributes.ContactBusinessName) return 1;
                         return 0;
                     });
+
                     sortedFeatures.forEach(feature => {
                         const option = document.createElement('option');
                         option.value = feature.attributes.ContactBusinessName;
                         option.textContent = feature.attributes.ContactBusinessName;
-
-                        // Store the feature in the map
                         featureMap.set(option.value, feature);
-
-                        // Append the new option to the select
                         purchaserSelect.appendChild(option);
                     });
+
                     sortedFeatures.forEach(feature => {
                         const option = document.createElement('option');
                         option.value = feature.attributes.ContactBusinessName;
                         option.textContent = feature.attributes.ContactBusinessName;
-
-                        // Store the feature in the map
                         featureMap.set(option.value, feature);
-
-                        // Append the new option to the select
                         loggerSelect.appendChild(option);
                     });
 
-                    document.getElementById('purchaser').addEventListener('change', function(e) {
-                        // Get the feature from the map using the selected value
-                        const selectedFeature = featureMap.get(e.target.value);
-
-                        if (selectedFeature) {
-                            selectedPOC = selectedFeature.attributes.ContactFirstName + ' ' + selectedFeature.attributes.ContactLastName;
-                            document.getElementById('purchaser').value = selectedPOC;
-                            console.log('Selected POC:', selectedPOC);
-
-                            selectedPhone = selectedFeature.attributes.ContactPhone;
-                            document.getElementById('PurchaserPOCPhone').value = selectedPhone;
-                            console.log('Selected Phone:', selectedPhone);
-
-                            selectedEmail = selectedFeature.attributes.ContactEMail1;
-                            document.getElementById('PurchaserPOCEmail').value = selectedEmail;
-                            console.log('Selected Email:', selectedEmail);
-                        }
+                    // Handle the signer names response
+                    const signerNames = signerNamesResponse.data.features.map(feature => feature.attributes.SignerName);
+                    const selectElement = document.getElementById('TimberSalesSpecialist');
+                    signerNames.forEach(signerName => {
+                        const optionElement = document.createElement('option');
+                        optionElement.text = signerName;
+                        optionElement.value = signerName;
+                        selectElement.add(optionElement);
                     });
 
-                    // Convert the select box into a searchable select box with Select2
-                    $(purchaserSelect).select2({
-                        width: 'resolve' // need to override the changed width by Select2
-                    }).on('select2:select', function(e) {
-                        // Get the feature from the map using the selected value
-                        const selectedFeature = featureMap.get(e.target.value);
+                    // Handle the data fetch response
+                    const attributes = dataFetchResponse.data.features[0].attributes;
+                    const changes = {
+                        "OBJECTID": attributes["OBJECTID"],
+                    }; // Initialize an empty object to keep track of changes
 
-                        if (selectedFeature) {
-                            selectedPOC = selectedFeature.attributes.ContactFirstName + ' ' + selectedFeature.attributes.ContactLastName;
-                            document.getElementById('PurchaserPOC').value = selectedPOC;
-                            console.log('Selected POC:', selectedPOC);
-
-                            selectedPhone = selectedFeature.attributes.ContactPhone;
-                            document.getElementById('PurchaserPOCPhone').value = selectedPhone;
-                            console.log('Selected Phone:', selectedPhone);
-
-                            selectedEmail = selectedFeature.attributes.ContactEMail1;
-                            document.getElementById('PurchaserPOCEmail').value = selectedEmail;
-                            console.log('Selected Email:', selectedEmail);
-                        }
-                    });
-                }).catch(function(error) {
-                    console.error(error);
-                });
-
-                function fetchSignerNames() {
-                    return esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/6/query", {
-                        responseType: "json",
-                        query: {
-                            where: "isTss='Yes'",
-                            outFields: "SignerName",
-                            returnDistinctValues: true,
-                            f: "json"
-                        }
-                    }).then(function(response) {
-                        const signerNames = response.data.features.map(feature => feature.attributes.SignerName);
-                        const selectElement = document.getElementById('TimberSalesSpecialist');
-                        signerNames.forEach(signerName => {
-                            const optionElement = document.createElement('option');
-                            optionElement.text = signerName;
-                            optionElement.value = signerName;
-                            selectElement.add(optionElement);
-                        });
-                    }).catch(function(error) {
-                        console.error(error);
-                    });
-                }
-
-                // Call fetchSignerNames when the script loads
-                fetchSignerNames();
-                // Get objectid from URL parameters
-                const urlParams = new URLSearchParams(window.location.search);
-                const objectId = urlParams.get('oid');
-
-                function formatUnixTimestamp(timestamp) {
-                    // Create a new Date object
-                    const date = new Date(timestamp);
-
-                    // Extract the date components
-                    const year = date.getFullYear();
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // months are 0-indexed
-                    const day = date.getDate().toString().padStart(2, '0');
-
-                    // Format the date string
-                    return `${year}-${month}-${day}`;
-                }
-
-                // Fetch the data using the objectId
-                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/0/query", {
-                    responseType: "json",
-                    query: {
-                        where: `OBJECTID=${objectId}`,
-                        outFields: "*",
-                        f: "json"
-                    }
-
-                }).then(function(response) {
-                    // Once we receive the data, populate the form fields
-                    const attributes = response.data.features[0].attributes;
                     for (const attribute in attributes) {
                         const formField = document.getElementById(attribute);
                         if (formField) {
                             if (formField.type === 'date') {
-                                // Convert the UNIX timestamp to a date string for date fields
                                 formField.value = formatUnixTimestamp(attributes[attribute]);
                             } else {
                                 formField.value = attributes[attribute];
@@ -381,16 +332,11 @@
                         }
                     }
 
-
-                    // Prepare attributes object for update
-                    const updateAttributes = {...attributes
-                    };
-
                     // Add an input event listener to all input fields
                     Array.from(document.querySelectorAll('input, select')).forEach((element) => {
                         element.addEventListener('input', function(event) {
-                            // Update the updateAttributes object when a field changes
-                            updateAttributes[event.target.id] = event.target.value;
+                            // Update the changes object when a field changes
+                            changes[event.target.id] = event.target.value;
                         });
                     });
 
@@ -401,13 +347,13 @@
 
                         // Create features array
                         const features = [{
-                            "attributes": updateAttributes
+                            "attributes": changes // Use the changes object here
                         }];
 
                         // Convert features to URL-encoded string
                         const formData = new URLSearchParams();
                         formData.append('f', 'json');
-                        formData.append('features', JSON.stringify(features));
+                        formData.append('updates', JSON.stringify(features));
 
                         // Send a POST request to your REST endpoint
                         esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/0/applyEdits", {
@@ -423,7 +369,7 @@
                         });
                     });
                 });
-            });
+        });
     </script>
 
 
