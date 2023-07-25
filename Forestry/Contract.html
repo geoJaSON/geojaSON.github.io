@@ -331,6 +331,45 @@
                             }
                         }
                     }
+                    document.getElementById('purchaser').addEventListener('change', function(e) {
+                        // Get the feature from the map using the selected value
+                        const selectedFeature = featureMap.get(e.target.value);
+
+                        if (selectedFeature) {
+                            selectedPOC = selectedFeature.attributes.ContactFirstName + ' ' + selectedFeature.attributes.ContactLastName;
+                            document.getElementById('PurchaserPOC').value = selectedPOC;
+                            console.log('Selected POC:', selectedPOC);
+
+                            selectedPhone = selectedFeature.attributes.ContactPhone;
+                            document.getElementById('PurchaserPOCPhone').value = selectedPhone;
+                            console.log('Selected Phone:', selectedPhone);
+
+                            selectedEmail = selectedFeature.attributes.ContactEMail1;
+                            document.getElementById('PurchaserPOCEmail').value = selectedEmail;
+                            console.log('Selected Email:', selectedEmail);
+                        }
+                    });
+                    // Convert the select box into a searchable select box with Select2
+                    $(purchaserSelect).select2({
+                        width: 'resolve' // need to override the changed width by Select2
+                    }).on('select2:select', function(e) {
+                        // Get the feature from the map using the selected value
+                        const selectedFeature = featureMap.get(e.target.value);
+
+                        if (selectedFeature) {
+                            selectedPOC = selectedFeature.attributes.ContactFirstName + ' ' + selectedFeature.attributes.ContactLastName;
+                            document.getElementById('PurchaserPOC').value = selectedPOC;
+                            console.log('Selected POC:', selectedPOC);
+
+                            selectedPhone = selectedFeature.attributes.ContactPhone;
+                            document.getElementById('PurchaserPOCPhone').value = selectedPhone;
+                            console.log('Selected Phone:', selectedPhone);
+
+                            selectedEmail = selectedFeature.attributes.ContactEMail1;
+                            document.getElementById('PurchaserPOCEmail').value = selectedEmail;
+                            console.log('Selected Email:', selectedEmail);
+                        }
+                    });
 
                     // Add an input event listener to all input fields
                     Array.from(document.querySelectorAll('input, select')).forEach((element) => {
