@@ -28,7 +28,7 @@
             display: grid;
             grid-template-columns: repeat(1, 1fr);
             gap: 5px;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             align-items: center;
             margin-top: 5px;
         }
@@ -103,14 +103,15 @@
                 <input type="text" id="GeneralSaleDescription" name="GeneralSaleDescription" placeholder="General Sale Description">
                 <input type="text" id="UniqueConditions" name="UniqueConditions" placeholder="Unique Conditions">
                 <input type="text" id="AwardOF41Notes" name="AwardOF41Notes" placeholder="Award Notes">
+                <label for="AwardCoverLetterSigner">Contract Signer</label>
                 <select id="AwardCoverLetterSigner" name="AwardCoverLetterSigner">
-                <!-- Options will be filled by JavaScript -->
-            </select>
+                    <!-- Options will be filled by JavaScript -->
+                </select>
             </div>
         </fieldset>
 
         <fieldset>
-            <legend>Purchaser</legend>
+            <legend>Awarded Purchaser</legend>
 
             <div class="form-group2">
 
@@ -120,17 +121,17 @@
                 <input type="text" id="PurchaserPOC" name="PurchaserPOC" placeholder="Purchaser POC">
                 <input type="text" id="PurchaserPOCPhone" name="PurchaserPOCPhone" placeholder="Purchaser POC Phone">
                 <input type="text" id="PurchaserPOCEmail" name="PurchaserPOCEmail" placeholder="Purchaser POC Email">
-                <input type="text" id="PurchaserPOCEmail" name="PurchaserPOCEmail" placeholder="Purchaser POC Email">
                 <input type="text" id="PurchaserPOCAddress" name="PurchaserPOCAddress" placeholder="Purchaser POC City">
-
                 <input type="text" id="PurchaserPOCCity" name="PurchaserPOCCity" placeholder="Purchaser POC City">
                 <input type="text" id="PurchaserPOCZip" name="PurchaserPOCZip" placeholder="Purchaser POC ZIP">
+                <input type="text" id="PurchaserFedTaxID" name="PurchaserFedTaxID" placeholder="Purchaser Federal Tax ID">
+
             </div>
         </fieldset>
         <fieldset>
             <legend>Bid Information</legend>
 
-            <div class="form-group">
+            <div class="form-group2">
                 <input type="number" id="ScaledUnitPrice" name="ScaledUnitPrice" placeholder="Scaled Unit Price">
 
                 <input type="number" id="BidDeposit" name="BidDeposit" placeholder="Bid Deposit">
@@ -214,15 +215,15 @@
                     purchaserSelect.innerHTML = ' ';
 
                     const sortedFeatures = purchaserResponse.data.features.sort((a, b) => {
-                        if (a.attributes.ContactBusinessName < b.attributes.ContactBusinessName) return -1;
-                        if (a.attributes.ContactBusinessName > b.attributes.ContactBusinessName) return 1;
+                        if (a.attributes.biddername < b.attributes.biddername) return -1;
+                        if (a.attributes.biddername > b.attributes.biddername) return 1;
                         return 0;
                     });
 
                     sortedFeatures.forEach(feature => {
                         const option = document.createElement('option');
-                        option.value = feature.attributes.ContactBusinessName;
-                        option.textContent = feature.attributes.ContactBusinessName;
+                        option.value = feature.attributes.biddername;
+                        option.textContent = feature.attributes.biddername;
                         featureMap.set(option.value, feature);
                         purchaserSelect.appendChild(option);
                     });
@@ -270,17 +271,29 @@
                         const selectedFeature = featureMap.get(e.target.value);
 
                         if (selectedFeature) {
-                            selectedPOC = selectedFeature.attributes.ContactFirstName + ' ' + selectedFeature.attributes.ContactLastName;
+                            selectedPOC = selectedFeature.attributes.bidderpoc;
                             document.getElementById('PurchaserPOC').value = selectedPOC;
-                            console.log('Selected POC: ', selectedPOC);
 
-                            selectedPhone = selectedFeature.attributes.ContactPhone;
+                            selectedPhone = selectedFeature.attributes.bidderphone;
                             document.getElementById('PurchaserPOCPhone').value = selectedPhone;
-                            console.log('Selected Phone: ', selectedPhone);
 
-                            selectedEmail = selectedFeature.attributes.ContactEMail1;
+                            selectedEmail = selectedFeature.attributes.bidderemail;
                             document.getElementById('PurchaserPOCEmail').value = selectedEmail;
-                            console.log('Selected Email:', selectedEmail);
+
+                            selectedBid = selectedFeature.attributes.totaloffer;
+                            document.getElementById('WinningBid').value = selectedBid;
+
+                            selectedDeposit = selectedFeature.attributes.biddeposit;
+                            document.getElementById('BidDeposit').value = selectedDeposit;
+
+                            selectedAddress = selectedFeature.attributes.bidderaddress;
+                            document.getElementById('PurchaserPOCAddress').value = selectedAddress;
+
+                            selectedCity = selectedFeature.attributes.biddercity;
+                            document.getElementById('PurchaserPOCCity').value = selectedBid;
+
+                            selectedZip = selectedFeature.attributes.bidderzip;
+                            document.getElementById('PurchaserPOCZip').value = selectedDeposit;
                         }
                     });
                     // Convert the select box into a searchable select box with Select2
@@ -291,17 +304,29 @@
                         const selectedFeature = featureMap.get(e.target.value);
 
                         if (selectedFeature) {
-                            selectedPOC = selectedFeature.attributes.ContactFirstName + ' ' + selectedFeature.attributes.ContactLastName;
+                            selectedPOC = selectedFeature.attributes.bidderpoc;
                             document.getElementById('PurchaserPOC').value = selectedPOC;
-                            console.log('Selected POC:', selectedPOC);
 
-                            selectedPhone = selectedFeature.attributes.ContactPhone;
+                            selectedPhone = selectedFeature.attributes.bidderphone;
                             document.getElementById('PurchaserPOCPhone').value = selectedPhone;
-                            console.log('Selected Phone:', selectedPhone);
 
-                            selectedEmail = selectedFeature.attributes.ContactEMail1;
+                            selectedEmail = selectedFeature.attributes.bidderemail;
                             document.getElementById('PurchaserPOCEmail').value = selectedEmail;
-                            console.log('Selected Email:', selectedEmail);
+
+                            selectedBid = selectedFeature.attributes.totaloffer;
+                            document.getElementById('WinningBid').value = selectedBid;
+
+                            selectedDeposit = selectedFeature.attributes.biddeposit;
+                            document.getElementById('BidDeposit').value = selectedDeposit;
+
+                            selectedAddress = selectedFeature.attributes.bidderaddress;
+                            document.getElementById('PurchaserPOCAddress').value = selectedAddress;
+
+                            selectedCity = selectedFeature.attributes.biddercity;
+                            document.getElementById('PurchaserPOCCity').value = selectedBid;
+
+                            selectedZip = selectedFeature.attributes.bidderzip;
+                            document.getElementById('PurchaserPOCZip').value = selectedDeposit;
                         }
                     });
 
