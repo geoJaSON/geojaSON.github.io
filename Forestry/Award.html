@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Data Input</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+    <script src="https://js.arcgis.com/4.21/"></script>
+    <style>
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        
+        html,
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+        
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+            align-items: center;
+            margin-top: 5px;
+        }
+        
+        .form-group2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+            margin-top: 10px;
+        }
+        
+        .form-group3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .form-group4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .submit-btn {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .submit-btn input {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .submit-btn input:hover {
+            background-color: #45a049;
+        }
+        
+        .checkbox-container input {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="dataForm">
+        <fieldset>
+            <legend>Contract Details</legend>
+
+            <label for="TimberSalesSpecialist">Timber Sales Specialist</label>
+
+            <select id="TimberSalesSpecialist" name="TimberSalesSpecialist">
+                <!-- Options will be filled by JavaScript -->
+            </select>
+
+            <div class="form-group">
+                <input type="text" id="SalePurpose" name="SalePurpose" placeholder="Sale Purpose">
+                <input type="text" id="GeneralSaleDescription" name="GeneralSaleDescription" placeholder="General Sale Description">
+                <input type="text" id="UniqueConditions" name="UniqueConditions" placeholder="Unique Conditions">
+                <input type="text" id="AwardOF41Notes" name="AwardOF41Notes" placeholder="Award Notes">
+                <select id="AwardCoverLetterSigner" name="AwardCoverLetterSigner">
+                <!-- Options will be filled by JavaScript -->
+            </select>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Purchaser</legend>
+
+            <div class="form-group2">
+
+                <select id="purchaser" name="purchaser">
+                    <!-- Options will be filled by JavaScript -->
+                </select>
+                <input type="text" id="PurchaserPOC" name="PurchaserPOC" placeholder="Purchaser POC">
+                <input type="text" id="PurchaserPOCPhone" name="PurchaserPOCPhone" placeholder="Purchaser POC Phone">
+                <input type="text" id="PurchaserPOCEmail" name="PurchaserPOCEmail" placeholder="Purchaser POC Email">
+                <input type="text" id="PurchaserPOCEmail" name="PurchaserPOCEmail" placeholder="Purchaser POC Email">
+                <input type="text" id="PurchaserPOCAddress" name="PurchaserPOCAddress" placeholder="Purchaser POC City">
+
+                <input type="text" id="PurchaserPOCCity" name="PurchaserPOCCity" placeholder="Purchaser POC City">
+                <input type="text" id="PurchaserPOCZip" name="PurchaserPOCZip" placeholder="Purchaser POC ZIP">
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>Bid Information</legend>
+
+            <div class="form-group">
+                <input type="number" id="ScaledUnitPrice" name="ScaledUnitPrice" placeholder="Scaled Unit Price">
+
+                <input type="number" id="BidDeposit" name="BidDeposit" placeholder="Bid Deposit">
+
+                <input type="number" id="WinningBid" name="WinningBid" placeholder="Winning Bid">
+                <input type="number" id="PerformanceBond" name="PerformanceBond" placeholder="Performance Bond">
+                <label for="IntentToAwardDate">Intent to Award Date</label>
+
+                <input type="date" id="IntentToAwardDate" name="IntentToAwardDate">
+                <label for="ContractSignDate">Contract Sign Date</label>
+
+                <input type="date" id="ContractSignDate" name="ContractSignDate">
+
+            </div>
+        </fieldset>
+        <div class="submit-btn">
+            <input type="submit" value="Submit Edits">
+        </div>
+        </fieldset>
+    </form>
+
+    <script>
+        let featureMap = new Map();
+        const urlParams = new URLSearchParams(window.location.search);
+        const cid = urlParams.get('cid');
+        const oid = urlParams.get('oid');
+        require([
+            "esri/identity/IdentityManager",
+            "esri/request",
+            "dojo/domReady!"
+        ], function(IdentityManager, esriRequest) {
+            const purchaserRequest = esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/8/query", {
+                responseType: "json",
+                query: {
+                    where: "abscontractno='" + cid + "'",
+                    outFields: "biddername, bidderphone, bidderemail, bidderaddress, biddercity, bidderzip, unitbid, biddeposit, totaloffer",
+                    f: "json"
+                }
+            });
+
+            const signerNamesRequest = esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/6/query", {
+                responseType: "json",
+                query: {
+                    where: "1=1",
+                    outFields: "SignerName",
+                    returnDistinctValues: true,
+                    f: "json"
+                }
+            });
+
+            // Get objectid from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const objectId = urlParams.get('oid ');
+
+            const dataFetchRequest = esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/0/query", {
+                responseType: "json",
+                query: {
+                    where: `OBJECTID=${oid}`,
+                    outFields: "*",
+                    f: "json"
+                }
+            });
+
+            function formatUnixTimestamp(timestamp) {
+                // Create a new Date object
+                const date = new Date(timestamp);
+
+                // Extract the date components
+                const year = date.getFullYear();
+                const month = (date.getMonth() + 1).toString().padStart(2, '0'); // months are 0-indexed
+                const day = date.getDate().toString().padStart(2, '0');
+
+                // Format the date string
+                return `${year}-${month}-${day}`;
+            }
+            Promise.all([purchaserRequest, signerNamesRequest, dataFetchRequest])
+                .then(function([purchaserResponse, signerNamesResponse, dataFetchResponse]) {
+                    // Handle the purchaser response
+                    const purchaserSelect = document.getElementById('purchaser');
+
+                    purchaserSelect.innerHTML = ' ';
+
+                    const sortedFeatures = purchaserResponse.data.features.sort((a, b) => {
+                        if (a.attributes.ContactBusinessName < b.attributes.ContactBusinessName) return -1;
+                        if (a.attributes.ContactBusinessName > b.attributes.ContactBusinessName) return 1;
+                        return 0;
+                    });
+
+                    sortedFeatures.forEach(feature => {
+                        const option = document.createElement('option');
+                        option.value = feature.attributes.ContactBusinessName;
+                        option.textContent = feature.attributes.ContactBusinessName;
+                        featureMap.set(option.value, feature);
+                        purchaserSelect.appendChild(option);
+                    });
+
+
+
+                    // Handle the signer names response
+                    const signerNames = signerNamesResponse.data.features.map(feature => feature.attributes.SignerName);
+                    const tssElement = document.getElementById('TimberSalesSpecialist');
+                    const signElement = document.getElementById('AwardCoverLetterSigner');
+
+                    signerNames.forEach(signerName => {
+                        // Create option element for TimberSalesSpecialist select list
+                        const tssOptionElement = document.createElement('option');
+                        tssOptionElement.text = signerName;
+                        tssOptionElement.value = signerName;
+                        tssElement.add(tssOptionElement);
+
+                        // Create option element for AwardCoverLetterSigner select list
+                        const signOptionElement = document.createElement('option');
+                        signOptionElement.text = signerName;
+                        signOptionElement.value = signerName;
+                        signElement.add(signOptionElement);
+                    });
+
+
+                    // Handle the data fetch response
+                    const attributes = dataFetchResponse.data.features[0].attributes;
+                    const changes = {
+                        "OBJECTID": attributes["OBJECTID"],
+                    }; // Initialize an empty object to keep track of changes
+
+                    for (const attribute in attributes) {
+                        const formField = document.getElementById(attribute);
+                        if (formField) {
+                            if (formField.type === 'date') {
+                                formField.value = formatUnixTimestamp(attributes[attribute]);
+                            } else {
+                                formField.value = attributes[attribute];
+                            }
+                        }
+                    }
+                    document.getElementById('purchaser').addEventListener('change', function(e) {
+                        // Get the feature from the map using the selected value
+                        const selectedFeature = featureMap.get(e.target.value);
+
+                        if (selectedFeature) {
+                            selectedPOC = selectedFeature.attributes.ContactFirstName + ' ' + selectedFeature.attributes.ContactLastName;
+                            document.getElementById('PurchaserPOC').value = selectedPOC;
+                            console.log('Selected POC: ', selectedPOC);
+
+                            selectedPhone = selectedFeature.attributes.ContactPhone;
+                            document.getElementById('PurchaserPOCPhone').value = selectedPhone;
+                            console.log('Selected Phone: ', selectedPhone);
+
+                            selectedEmail = selectedFeature.attributes.ContactEMail1;
+                            document.getElementById('PurchaserPOCEmail').value = selectedEmail;
+                            console.log('Selected Email:', selectedEmail);
+                        }
+                    });
+                    // Convert the select box into a searchable select box with Select2
+                    $(purchaserSelect).select2({
+                        width: 'resolve' // need to override the changed width by Select2
+                    }).on('select2:select', function(e) {
+                        // Get the feature from the map using the selected value
+                        const selectedFeature = featureMap.get(e.target.value);
+
+                        if (selectedFeature) {
+                            selectedPOC = selectedFeature.attributes.ContactFirstName + ' ' + selectedFeature.attributes.ContactLastName;
+                            document.getElementById('PurchaserPOC').value = selectedPOC;
+                            console.log('Selected POC:', selectedPOC);
+
+                            selectedPhone = selectedFeature.attributes.ContactPhone;
+                            document.getElementById('PurchaserPOCPhone').value = selectedPhone;
+                            console.log('Selected Phone:', selectedPhone);
+
+                            selectedEmail = selectedFeature.attributes.ContactEMail1;
+                            document.getElementById('PurchaserPOCEmail').value = selectedEmail;
+                            console.log('Selected Email:', selectedEmail);
+                        }
+                    });
+
+                    // Add an input event listener to all input fields
+                    Array.from(document.querySelectorAll('input, select')).forEach((element) => {
+                        element.addEventListener('input', function(event) {
+                            // Update the changes object when a field changes
+                            changes[event.target.id] = event.target.value;
+                        });
+                    });
+
+                    // Listen for form submit event
+                    document.getElementById('dataForm').addEventListener('submit', function(event) {
+                        // Prevent the default form submit action
+                        event.preventDefault();
+
+                        // Create features array
+                        const features = [{
+                            "attributes": changes // Use the changes object here
+                        }];
+
+                        // Convert features to URL-encoded string
+                        const formData = new URLSearchParams();
+                        formData.append('f', 'json');
+                        formData.append('updates', JSON.stringify(features));
+
+                        // Send a POST request to your REST endpoint
+                        esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/0/applyEdits", {
+                            method: "post",
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: formData.toString()
+                        }).then(function(response) {
+                            console.log(response.data);
+                        }).catch(function(error) {
+                            console.error(error);
+                        });
+                    });
+                });
+        });
+    </script>
+
+
+</body>
+
+</html>
