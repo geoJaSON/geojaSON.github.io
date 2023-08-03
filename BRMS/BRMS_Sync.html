@@ -34,7 +34,7 @@
 
 
     function fetchData(file) {
-      return fetch(`data/${file}.json`)
+      return fetch(`./data/${file}.json`)
         .then(response => response.json())
         .catch(error => console.error('An error occurred while fetching the Ramp Up data:', error));
     }
