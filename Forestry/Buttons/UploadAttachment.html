@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Data Input</title>
+    <style>
+
+    </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+    <script src="https://js.arcgis.com/4.21/"></script>
+
+</head>
+
+<body>
+    <form id="dataForm">
+        <div class="form-group">
+            <input type="file" id="file" name="file">
+        </div>
+        <div class="submit-btn">
+            <input type="submit" value="Submit New Comment">
+        </div>
+    </form>
+
+
+    <script>
+        var urlParams = new URLSearchParams(window.location.search);
+        var objectId = urlParams.get('oid');
+
+        require(["esri/identity/IdentityManager", "esri/request", "dojo/domReady!"], function(IdentityManager, esriRequest) {
+            // Add an event listener for the form submit
+            document.getElementById('dataForm').addEventListener('submit', function(event) {
+                // Prevent the default form submit action
+                event.preventDefault();
+                const file = document.getElementById("file").files[0];
+
+                // Fetch the data when the document is ready
+                // Send a POST request to your REST endpoint
+                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/0/query", {
+                    responseType: "json",
+                    query: {
+                        where: "1=2",
+                        outFields: "OBJECTID",
+                        f: "json"
+                    }
+                }).then(function(response) {
+                    const formData = new FormData();
+                    formData.append("file", file);
+                    $.ajax({
+                        url: "https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/0/" + objectId + "/addAttachment",
+                        method: "POST",
+                        data: formData,
+                        processData: false, // prevent jQuery from transforming the data into a query string
+                        contentType: false, // set to false because jQuery defaults it to application/x-www-form-urlencoded
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'multipart/form-data'
+                        },
+                        success: function(data) {
+                            // The attachment was uploaded successfully
+                            console.log("Attachment uploaded successfully.");
+                        },
+                        error: function(error) {
+                            // An error occurred
+                            console.log(error);
+                        }
+                    });
+
+                }).catch(function(error) {
+                    console.error(error);
+                });
+            });
+        });
+    </script>
+
+</body>

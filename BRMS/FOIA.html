@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Operation Blue Roof Status Lookup</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+
+    <style>
+        html,
+        body {
+            height: 100%;
+            /* Set height to 100% for the html and body to allow child elements to stretch */
+            font-family: Arial, sans-serif;
+            margin: 0%;
+            padding: 0%;
+            background-color: #f0f0f0;
+        }
+
+        iframe.fullsize {
+            width: 100%;
+            height: 100%;
+            border: none;
+            /* To remove any default borders */
+        }
+
+
+        .wrapper {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    /* Set height to 100% for the wrapper */
+    margin: 0; /* Removed the margin */
+    padding: 0px;
+    box-sizing: border-box; /* Add this to include padding and border in the total size */
+}
+
+
+        .container {
+            width: 20%;
+            height: 100%;
+            /* Set height to 100% for the container */
+            padding: 1%;
+            background-color: #ffffff;
+            overflow: auto;
+            box-sizing: border-box;
+            /* Include padding and border in element's total width and height */
+        }
+
+        .right-div {
+            width: 80%;
+            height: 100%;
+            /* Set height to 100% for the right-div */
+            background-color: #ffffff;
+            padding: 1%;
+            overflow: auto;
+            box-sizing: border-box;
+            /* Include padding and border in element's total width and height */
+        }
+        
+        #detailedresult {
+    width: 100%;
+    height: 100%;
+    /* Set height to 100% for the right-div */
+    background-color: #ffffff;
+    overflow: auto;
+    box-sizing: border-box;
+    /* Include padding and border in element's total width and height */
+}
+
+
+        h2 {
+            color: #3366CC;
+        }
+
+        label,
+        input,
+        button {
+            display: block;
+            width: 100%;
+            margin-bottom: 1%;
+        }
+
+        button {
+            padding: 1%;
+            background-color: #3366CC;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #285e8e;
+        }
+
+        #result {
+            border: 1px solid #3366CC;
+            padding: 1;
+            color: #3366CC;
+            display: none;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/magnific-popup.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/jquery.magnific-popup.min.js"></script>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <h2>Search</h2>
+            <label for="searchroe">Enter ROE #:</label>
+            <input type="text" id="searchroe" name="searchroe" placeholder="ROE Number">
+            <label> OR </label>
+            <label for="searchid">Enter Address or Email:</label>
+            <input type="text" id="searchid" name="searchid" placeholder="Address or Email">
+            <button id="submit">Submit</button>
+            <p id="result"></p>
+        </div>
+        <div class="right-div">
+            <div id="detailedresult" class="detailedresult"></div>
+
+        </div>
+    </div>
+
+    <script>
+function showEmbeddedPage(roeidpk) {
+    var url = "https://arcportal-ucop-corps.usace.army.mil/s0portal/apps/dashboards/4e79f1fe893d43ea93d20e7329645bb8#roe=" + roeidpk; // Replace <url> with the desired URL
+    console.log(url);
+    $("#detailedresult").html('<iframe class="fullsize" src="' + url + '"></iframe>');
+}
+
+
+        $(function () {
+            $("#searchid").autocomplete({
+                source: function (request, response) {
+                    $.ajax({
+                        url: "https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/BlueRoof/BRMS_Ian/MapServer/0/query",
+                        data: {
+                            f: 'json',
+                            where: "appaddress LIKE '%" + request.term + "%' OR appprimaryemail LIKE '%" + request.term + "%'",
+                            outFields: 'roeidpk,appaddress, OBJECTID, appprimaryemail',
+                        },
+                        success: function (data) {
+                            var suggestions = [];
+                            for (var i = 0; i < data.features.length; i++) {
+                                suggestions.push(data.features[i].attributes.appaddress);
+                            }
+                            response(suggestions);
+                        }
+                    });
+                },
+                minLength: 3, // Start suggesting when the user has typed at least 3 characters
+                select: function (event, ui) {
+                    // Call the fetchAndDisplayAttachments function when a result is selected
+                    fetchAndDisplayAttachments(ui.item.value);
+                }
+            });
+        });
+
+        $("#submit").click(function () {
+            var searchroe = $("#searchroe").val();
+            var searchid = $("#searchid").val();
+            var whereClause;
+
+            if (searchroe) {
+                whereClause = "roeidpk = " + searchroe;
+            } else if (searchid) {
+                whereClause = "appaddress = '" + searchid + "' OR appprimaryemail = '" + searchid + "'";
+            }
+
+            $.ajax({
+                url: "https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/BlueRoof/BRMS_Ian/MapServer/0/query",
+                data: {
+                    f: 'json',
+                    where: whereClause,
+                    outFields: 'OBJECTID, roeidpk, appprimaryemail, appfirstname, applastname,appaddress, flagroe'
+                },
+                success: function (data) {
+                    var message = "";
+                    if (data.features.length > 0) {
+                        for (var i = 0; i < data.features.length; i++) {
+                            message += "<div class='box'><a href='#' class='summary-item' data-roeidpk='" + data.features[i].attributes.roeidpk + "'>" + data.features[i].attributes.roeidpk + " - " + data.features[i].attributes.flagroe + "<br>" + data.features[i].attributes.appfirstname + " " + data.features[i].attributes.applastname + "<br>" + data.features[i].attributes.appaddress + "</a></div><br>";
+                        }
+                    } else {
+                        message = "<div class='box'>No matching record found.</div>";
+                    }
+                    $("#result").html(message);
+                    $("#result").show();
+                    $(".summary-item").on("click", function () {
+                        var roe = $(this).data('roeidpk');
+                        console.log(roe); // Now this should log the correct value
+                        showEmbeddedPage(roe);
+                    });
+                }
+
+
+            });
+
+        });
+
+    </script>
+</body>
+
+
+</html>

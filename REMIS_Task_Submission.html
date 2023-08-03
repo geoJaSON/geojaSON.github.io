@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Data Input</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+    <script src="https://js.arcgis.com/4.21/"></script>
+    <style>
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        
+        html,
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+        
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 200px;
+            width: 100%;
+        }
+        
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .form-group2 {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .form-group3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            align-items: center;
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .submit-btn {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .submit-btn input {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .submit-btn input:hover {
+            background-color: #45a049;
+        }
+        
+        .checkbox-container input {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="dataForm">
+        <fieldset>
+            <legend>Creating User</legend>
+        <div class="form-group2">
+            <select id="created_user" name="created_user">
+            <option value="None">None</option>
+        </select>
+            <input type="text" id="EMP_ID_NO" name="EMP_ID_NO" placeholder="Employee Number">
+            <input type="text" id="P_WI_RESPONSIBLE_ORG" name="P_WI_RESPONSIBLE_ORG" placeholder="Org Code">
+            <input type="text" id="P_DIV_DIST" name="P_DIV_DIST" placeholder="District">
+        </div>
+        </fieldset>
+    <fieldset>
+        <legend>Task Type</legend>
+        <div class="form-group1">
+            
+    
+            <input type="radio" id="task_type_gis" name="task_type" value="GIS MAPPING">
+            <label for="task_type_gis">GIS MAPPING</label>
+            
+            <input type="radio" id="task_type_project" name="task_type" value="PROJECT DEVELOPMENT SUPPORT">
+            <label for="task_type_project">PROJECT DEVELOPMENT SUPPORT</label>
+    
+            <input type="radio" id="task_type_project" name="task_type" value="OUTGRANTS">
+            <label for="task_type_project">OUTGRANTS</label>
+        </div>
+    </fieldset>
+        <fieldset>
+            <legend>Project ID</legend>
+        <select id="P_PROJ_ID" name="P_PROJ_ID">
+            <option value="None">None</option>
+        </select>
+    </fieldset>
+
+    
+    <div id="content"></div>
+    </form>
+
+    <script>
+        let featureMap = new Map();
+        document.addEventListener('DOMContentLoaded', function() {
+        const radios = document.querySelectorAll('input[type="radio"]');
+        const contentDiv = document.getElementById('content');
+
+        radios.forEach(radio => {
+            let htmlContent = '';
+
+            radio.addEventListener('change', function() {
+            switch (this.value) {
+                case 'GIS MAPPING':
+                htmlContent = `
+            <label>Map Description<input type="text"></label><br>
+            <label>County<input type="text" id="P_PRIM_COUNTY" name="P_PRIM_COUNTY">
+            <label>State<input type="text" id="P_PRIM_STATE" name="P_PRIM_STATE">
+          `;
+           break;
+                case 'PROJECT DEVELOPMENT SUPPORT':
+                htmlContent = `
+                <label>Meeting Description<input type="text"></label><br>
+                <label>County<input type="text" id="P_PRIM_COUNTY" name="P_PRIM_COUNTY">
+                <label>State<input type="text" id="P_PRIM_STATE" name="P_PRIM_STATE">
+          `;                
+          break;
+                case 'OUTGRANTS':
+                htmlContent = `
+            <label>Field 1 for Option 3: <input type="text"></label><br>
+            <label>Field 2 for Option 3: <input type="text"></label><br>
+            <label>Field 3 for Option 3: <input type="text"></label><br>
+            <label>Field 4 for Option 3: <input type="text"></label>
+          `;                
+          break;
+
+            }
+            contentDiv.innerHTML = htmlContent;
+
+            });
+        });
+        });
+
+        // load the Portal and PortalQueryParams modules
+        require(["esri/identity/IdentityManager", "esri/request", "esri/portal/Portal",
+                "esri/portal/PortalQueryParams", "dojo/domReady!"
+            ], function(IdentityManager, esriRequest, Portal, PortalQueryParams) {
+                // Fetch the data when the document is ready
+                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/REMIS_Tasks/FeatureServer/1/query", {
+                    responseType: "json",
+                    query: {
+                        where: "1=1",
+                        outFields: "*",
+                        f: "json"
+                    }
+
+                }).then(function(response) {
+                    userid = IdentityManager.credentials[0].userId
+                    console.log(userid)
+                    // Get the input fields
+                    const userSelect = document.getElementById('created_user');
+
+                    userSelect.innerHTML = '';
+
+                    // Sort and iterate through features
+                    const sortedFeatures = response.data.features.sort((a, b) => {
+                        if (a.attributes.em_name < b.attributes.em_name) return -1;
+                        if (a.attributes.em_name > b.attributes.em_name) return 1;
+                        return 0;
+                    });
+                    sortedFeatures.forEach(feature => {
+                    const option = document.createElement('option');
+                    option.value = feature.attributes.em_name;
+                    option.textContent = feature.attributes.em_name;
+
+                    // Check if this user ID matches the logged-in user ID
+                    if (feature.attributes.emp_user === userid) {
+                        option.selected = true;
+
+                        // Populate other fields
+                        document.getElementById('EMP_ID_NO').value = feature.attributes.emp_id_no;
+                        document.getElementById('P_WI_RESPONSIBLE_ORG').value = feature.attributes.org_code;
+                        document.getElementById('P_DIV_DIST').value = feature.attributes.div_dist;
+                    }
+
+                    // Store the feature in the map
+                    featureMap.set(option.value, feature);
+
+                    // Append the new option to the select
+                    userSelect.appendChild(option);
+                    });
+
+
+                    // Convert the select box into a searchable select box with Select2
+                    $(userSelect).select2({
+                        width: 'resolve' // need to override the changed width by Select2
+                    }).on('select2:select', function(e) {
+                        // Get the feature from the map using the selected value
+                        const selectedFeature = featureMap.get(e.target.value);
+
+                        if (selectedFeature) {
+                            empID = selectedFeature.attributes.emp_id_no;
+                            document.getElementById('EMP_ID_NO').value = empID;
+
+                            org_code = selectedFeature.attributes.org_code;
+                            document.getElementById('P_WI_RESPONSIBLE_ORG').value = org_code;
+
+                            div_dist = selectedFeature.attributes.div_dist;
+                            document.getElementById('P_DIV_DIST').value = div_dist;
+                        }
+                    });
+                }).catch(function(error) {
+                    console.error(error);
+                });
+
+            
+            
+                // Fetch the data when the document is ready
+                esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/REMIS_Tasks/FeatureServer/3/query", {
+                    responseType: "json",
+                    query: {
+                        where: "1=1",
+                        outFields: "*",
+                        f: "json"
+                    }
+
+                }).then(function(response) {
+                    
+                    // Get the input fields
+                    const userSelect = document.getElementById('P_PROJ_ID');
+
+                    userSelect.innerHTML = '';
+
+                    // Sort and iterate through features
+                    const sortedFeatures = response.data.features.sort((a, b) => {
+                        if (a.attributes.proj_id < b.attributes.proj_id) return -1;
+                        if (a.attributes.proj_id > b.attributes.proj_id) return 1;
+                        return 0;
+                    });
+                    sortedFeatures.forEach(feature => {
+                    const option = document.createElement('option');
+                    option.value = feature.attributes.proj_id;
+                    option.textContent = feature.attributes.proj_id + " - " + feature.attributes.proj_name;
+
+
+                    // Store the feature in the map
+                    featureMap.set(option.value, feature);
+
+                    // Append the new option to the select
+                    userSelect.appendChild(option);
+                    });
+                    $(userSelect).select2({
+                        width: 'resolve' // need to override the changed width by Select2
+                    }).on('select2:select', function(e) {
+                        // Get the feature from the map using the selected value
+                        const selectedFeature = featureMap.get(e.target.value);
+
+                        if (selectedFeature) {
+                            state = selectedFeature.attributes.state;
+                            document.getElementById('P_PRIM_STATE').value = state;
+
+                            county = selectedFeature.attributes.primary_county;
+                            document.getElementById('P_PRIM_COUNTY').value = county;
+                        }
+                    });
+
+
+                }).catch(function(error) {
+                    console.error(error);
+                });
+
+            },
+
+            function(Portal, PortalQueryParams) {
+                portal = new Portal();
+                // Setting authMode to immediate signs the user in once loaded
+                portal.authMode = "auto";
+
+                // Once portal is loaded, user signed in
+                portal.load().then(function() {
+                    console.log(portal);
+
+                    // Create query parameters for the portal search
+                    // This object autocasts as new PortalQueryParams()
+                    let queryParams = {
+                        query: "owner:" + portal.user.username,
+                        sortField: "numViews",
+                        sortOrder: "desc",
+                        num: 20
+                    };
+                    // Query the items based on the queryParams created from portal above
+                    portal.queryItems(queryParams).then(createGallery);
+                });
+            
+            }
+        );
+    </script>
+
+
+
+</body>
