@@ -10,13 +10,20 @@
             margin: 0;
             padding: 0;
             background-color: #f0f0f0;
+            background-image: url('https://d1ldvf68ux039x.cloudfront.net/thumbs/photos/1810/4835836/1000w_q95.jpg');
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
         }
         
         .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+    background-color: rgba(255, 255, 255, 0.9);
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 3%;
+    min-height: 100vh;  /* Add this line */
+}
+
         
         .image-container {
             text-align: center;
@@ -53,6 +60,14 @@
             color: #3366CC;
             display: none;
         }
+        .semi-transparent-background {
+        background-color: rgba(0, 0, 0, 0.5);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/magnific-popup.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/jquery.magnific-popup.min.js"></script>
@@ -62,7 +77,7 @@
 
     <div class="container">
         <div class="image-container">
-            <img src="https://www.usace.army.mil/Portals/2/170925-A-RO090-002_1.jpg" alt="Image" style="max-width: 100%; max-height: 300px;">
+            <img src="https://www.usace.army.mil/Portals/2/170925-A-RO090-002_1.jpg" alt="Image" style="max-width: 100%; max-height: 200px;">
             <h1>APPLICATION STATUS</h1>
         </div>
         <br><br>
@@ -76,6 +91,8 @@
         <button id="keep-application" style="display: none; background-color: green;">No, I want to keep my application</button>
         <button id="confirm-cancel" style="display: none; background-color: red;">Yes, I am certain. Please cancel my application</button>
         <p id="message"></p>
+        
+
     </div>
 
     <script>
@@ -83,18 +100,21 @@
             var searchid = $("#searchid").val();
             var pin = $("#pin").val();
             var oid = 0
+            let gid = ''
             $.ajax({
-                url: "https://arcportal-ucop-corps.usace.army.mil/esf3/rest/services/TempRoofing/BRMS/FeatureServer/0/query",
+                url: "https://arcportal-ucop-partners.usace.army.mil/usacearcgis/rest/services/BRMS_ROE_Public_Lookup/MapServer/0/query",
                 data: {
                     f: 'json',
                     where: "(roeidpk = '" + searchid + "' OR appreferencenumber = '" + searchid + "') AND apppinnumber = '" + pin + "'",
-                    outFields: 'workstate, progressstatus,OBJECTID',
+                    outFields: 'workstate, progressstatus,OBJECTID,GlobalID',
                 },
                 success: function(data) {
                     var message = "";
                     if (data.features.length > 0) {
                         var attributes = data.features[0].attributes;
                         oid = attributes.OBJECTID;
+                        gid = attributes.GlobalID;
+                        console.log(gid)
                         if (attributes.workstate == 'Valid') {
                             if (attributes.progressstatus == 'With Field QA' || attributes.progressstatus == 'With Remote QA') {
                                 message += "Your application is waiting for damage assessment by a member of our field team. You may soon be contacted by Corps of Engineers personnel to discuss your damages.<br><br>";
@@ -106,28 +126,31 @@
                                 message += "Your application has been successfully assessed for damage and will soon be assigned to a local contractor for work to begin. <br><br>";
                             }
                             if (attributes.progressstatus == 'With Contractor') {
-                                message += "Your application has been assigned to a local contractor for work to begin.<br><br>";
+                                message += "Your application has been assigned to a local contractor for work to begin.<br>";
                             }
                         }
                         if (attributes.workstate == 'Confirmed Duplicate') {
-                            message += "Your application for Temporary Roofing repairs was determined to be a duplicate application of another record at this address. If you have not cancelled the previous application then it is still being work. For further information, or if you believe this is in error, please contact the phone number above. <br><br>";
+                            message += "Your application for Temporary Roofing repairs was determined to be a duplicate application of another record at this address. If you have not cancelled the previous application then it is still being worked. For further information, or if you believe this is in error, please contact the phone number above.<br>";
+                        }
+                        if (attributes.workstate == 'Potential Duplicate') {
+                            message += "Your application has been received however it seems there is already an active application at that address. Our team will work to verify this. If you have not cancelled the previous application then it is still being worked. If you did not submit an application at this address before, then this application will be validated shortly and work will continue. For further information, or if you believe this is in error, please contact the phone number above.<br>";
                         }
                         if (attributes.workstate == 'Disqualified') {
-                            message += "Your application for Temporary Roofing repairs was determined to be ineligible. For further information, or if you believe this is in error, please contact the phone number above. <br><br>";
+                            message += "Your application for Temporary Roofing repairs was determined to be ineligible. For further information, or if you believe this is in error, please contact the phone number above.<br>";
                         }
                         // if 'Cancel' is in attributes.workstate
                         if (attributes.workstate == 'Cancellation to QA' || attributes.workstate == 'Cancellation to KTR' || attributes.workstate == 'Cancellation to Call Center' || attributes.workstate == 'Cancellation Online') {
-                            message += "Your application for Temporary Roofing repairs was cancelled by the owner. For further information, or if you believe this is in error, please contact the phone number above. <br><br>";
+                            message += "Your application for Temporary Roofing repairs was cancelled by the owner. For further information, or if you believe this is in error, please contact the phone number above. <br>";
                         }
                         if (attributes.workstate == 'Geocode Error') {
-                            message += "We are having issues locating the correct structure for temporary repairs. This may be due to outdated address information in the area. No action is necessary on your part, although a member of our team may attempt to contact you if a location cannot be determined. For further information please contact the phone number above. <br><br>";
+                            message += "We are having issues locating the correct structure for temporary repairs. This may be due to outdated address information in the area. No action is necessary on your part, although a member of our team may attempt to contact you if a location cannot be determined. For further information please contact the phone number above.<br>";
                         }
 
                         // Add more conditions here if necessary
                     } else {
                         message = "No matching record found.";
                     }
-                    if ((attributes.workstate == 'Valid') && (attributes.progressstatus == 'With Field QA' || attributes.progressstatus == 'With Remote QA' || attributes.progressstatus == 'Awaiting Remote QA Assignment')) {
+                    if ((attributes.workstate == 'Valid' || attributes.workstate == 'Potential Duplicate' || attributes.workstate == 'Geocode Error') && (attributes.progressstatus == 'With Field QA' || attributes.progressstatus == 'With Remote QA' || attributes.progressstatus == 'Awaiting Remote QA Assignment' || attributes.progressstatus == 'With QAS' || attributes.progressstatus == 'Awaiting Field QA Assignment')) {
                         $('#cancel-button').show();
                     } else {
                         $('#cancel-button').hide();
@@ -142,13 +165,12 @@
                     });
 
                     $("#confirm-cancel").click(function() {
-                        const UPDATE_API_URL = 'https://arcportal-ucop-corps.usace.army.mil/esf3/rest/services/TempRoofing/BRMS/FeatureServer/0/updateFeatures';
+                        const UPDATE_API_URL = 'https://arcportal-ucop-partners.usace.army.mil/usacearcgis/rest/services/BRMS_Public_Cancellation/FeatureServer/0/addFeatures';
 
                         // Create features array with updated data
                         const features = [{
                             "attributes": {
-                                "OBJECTID": oid,
-                                "workstate": 'Cancellation Online'
+                                "roegid": gid
                             }
                         }];
 
@@ -167,7 +189,7 @@
                             })
                             .then(response => response.json())
                             .then(data => {
-                                if (data.updateResults && data.updateResults[0].success) {
+                                if (data.addResults && data.addResults[0].success) {
                                     $("#message").text('Your application for temporary roofing repairs has been successfully cancelled');
                                 } else {
                                     $("#message").text('Failed to post data');
@@ -185,28 +207,6 @@
                         $('#confirm-cancel').show();
                     });
 
-
-                    // Fetch and display image attachments
-                    if (data.features.length > 0) {
-                        $.ajax({
-                            url: "https://arcportal-ucop-corps.usace.army.mil/esf3/rest/services/TempRoofing/BRMS/FeatureServer/0/" + data.features[0].attributes.OBJECTID + "/attachments?f=json",
-                            success: function(attachmentData) {
-                                if (attachmentData.attachmentInfos && attachmentData.attachmentInfos.length > 0) {
-                                    for (var i = 0; i < attachmentData.attachmentInfos.length; i++) {
-                                        var imageUrl = "https://arcportal-ucop-corps.usace.army.mil/esf3/rest/services/TempRoofing/BRMS/FeatureServer/0/" + data.features[0].attributes.OBJECTID + "/attachments/" + attachmentData.attachmentInfos[i].id;
-                                        $("#result").append("<a href='" + imageUrl + "' class='mfp-image'><img src='" + imageUrl + "' alt='Image' style='width:100px; height:100px;'></a>");
-                                    }
-                                    $('.mfp-image').magnificPopup({
-                                        type: 'image'
-                                    });
-                                }
-                            },
-                            error: function(jqXHR, textStatus, errorThrown) {
-                                // Error handling
-                                alert("Error getting attachments: " + textStatus + "\n" + errorThrown);
-                            }
-                        });
-                    }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     // Error handling
