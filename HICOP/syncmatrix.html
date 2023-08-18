@@ -78,7 +78,7 @@
                             }
                         };
                     }).sort((a, b) => a.start - b.start);
-                    const missionAssignmentStartDate = tasks.find(task => task.id === 'landfall').start;
+                    const missionAssignmentStartDate = tasks.find(task => task.id === 'trigger').start;
                     const maxEndDate = tasks.reduce((max, task) => Math.max(max, task.end), 0);
 
                     const chart = Highcharts.ganttChart('container', {
