@@ -154,9 +154,10 @@ function showEmbeddedPage(roeidpk) {
                 },
                 minLength: 3, // Start suggesting when the user has typed at least 3 characters
                 select: function (event, ui) {
-                    // Call the fetchAndDisplayAttachments function when a result is selected
-                    fetchAndDisplayAttachments(ui.item.value);
-                }
+        // Store the selected address into the searchid input field
+        $("#searchid").val(ui.item.value);
+        
+    }
             });
         });
 
