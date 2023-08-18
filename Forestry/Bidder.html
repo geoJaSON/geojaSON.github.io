@@ -175,10 +175,11 @@
                 }];
 
                 // Convert features to URL-encoded string
+                console.log(features)
+                console.log(pgid)
                 const formData = new URLSearchParams();
                 formData.append('f', 'json');
                 formData.append('features', JSON.stringify(features));
-                console.log(features);
                 // Send a POST request to your REST endpoint
                 esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/8/addFeatures", {
                     method: "post",
