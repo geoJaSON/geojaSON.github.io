@@ -87,7 +87,7 @@
         var urlParams = new URLSearchParams(window.location.search);
         var cid = urlParams.get('cid');
         var pgid = urlParams.get('pgid');
-
+        console.log(pgid)
         require(["esri/identity/IdentityManager", "esri/request", "dojo/domReady!"], function(IdentityManager, esriRequest) {
             // Fetch the data when the document is ready
             esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/2/query", {
@@ -176,7 +176,7 @@
 
                 // Convert features to URL-encoded string
                 console.log(features)
-                console.log(pgid)
+                
                 const formData = new URLSearchParams();
                 formData.append('f', 'json');
                 formData.append('features', JSON.stringify(features));
