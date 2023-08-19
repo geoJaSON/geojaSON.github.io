@@ -10,7 +10,7 @@
             var outputFileUrl;
             var params = {};
             var urlParams = new URLSearchParams(window.location.search);
-            params.contract = urlParams.get('contract');
+            params.contract = urlParams.get('cid');
             require([
                 "esri/tasks/Geoprocessor",
                 "esri/rest/support/JobInfo"
@@ -41,7 +41,7 @@
             var link1 = document.getElementById("run-geoprocessing-tool-1");
             link1.addEventListener("click", function(event) {
                 event.preventDefault();
-                executeGeoprocessing('https://arcportal-ucop-corps.usace.army.mil/gp/rest/services/Service1/GPServer/Service1');
+                executeGeoprocessing('https://arcportal-ucop-corps.usace.army.mil/gp/rest/services/PrepareAbstractOfBids/GPServer/Prepare%20Abstract%20of%20Bids');
             });
 
             var link2 = document.getElementById("run-geoprocessing-tool-2");
@@ -49,18 +49,6 @@
                 event.preventDefault();
                 executeGeoprocessing('https://arcportal-ucop-corps.usace.army.mil/gp/rest/services/Service2/GPServer/Service2');
             });
-            var link1 = document.getElementById("run-geoprocessing-tool-3");
-            link1.addEventListener("click", function(event) {
-                event.preventDefault();
-                executeGeoprocessing('https://arcportal-ucop-corps.usace.army.mil/gp/rest/services/Service1/GPServer/Service1');
-            });
-
-            var link2 = document.getElementById("run-geoprocessing-tool-4");
-            link2.addEventListener("click", function(event) {
-                event.preventDefault();
-                executeGeoprocessing('https://arcportal-ucop-corps.usace.army.mil/gp/rest/services/Service2/GPServer/Service2');
-            });
-
 
             // Add similar blocks for more buttons as required
         });
@@ -69,7 +57,8 @@
 <style>
     .run-geoprocessing-tool {
         display: inline-block;
-        background-color: #7b8361;
+        background-color: #7b8361
+;
         color: white;
         padding: 5px 10px;
         text-align: center;
@@ -110,3 +99,6 @@
 
 
 </html>
+
+
+
