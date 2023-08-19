@@ -6,11 +6,16 @@
     <title>Print Abstract of Bids</title>
     <script src="https://js.arcgis.com/4.20/"></script>
     <script>
-        function executeGeoprocessing(serviceURL) {
+        function executeGeoprocessing(serviceURL, clickedButton) {
             var outputFileUrl;
             var params = {};
             var urlParams = new URLSearchParams(window.location.search);
             params.contract = urlParams.get('cid');
+            
+            // Change the button to show loading icon
+            clickedButton.innerHTML = "Loading...";
+            clickedButton.classList.add("loading");
+
             require([
                 "esri/tasks/Geoprocessor",
                 "esri/rest/support/JobInfo"
@@ -18,7 +23,6 @@
                 var gp = new Geoprocessor(serviceURL);
                 gp.submitJob(params).then((jobInfo) => {
                     const jobid = jobInfo.jobId;
-                    console.log("ArcGIS Server job ID: ", jobid);
 
                     const options = {
                         interval: 1500,
@@ -31,6 +35,10 @@
                         jobInfo.fetchResultData('outfile').then(function(result) {
                             outputFileUrl = result.value.url;
                             window.open(outputFileUrl, "_blank");
+
+                            // Restore the button to its original state
+                            clickedButton.innerHTML = clickedButton.getAttribute("data-original-text");
+                            clickedButton.classList.remove("loading");
                         });
                     });
                 });
@@ -38,19 +46,14 @@
         }
 
         document.addEventListener("DOMContentLoaded", function(event) {
-            var link1 = document.getElementById("run-geoprocessing-tool-1");
-            link1.addEventListener("click", function(event) {
-                event.preventDefault();
-                executeGeoprocessing('https://arcportal-ucop-corps.usace.army.mil/gp/rest/services/PrepareAbstractOfBids/GPServer/Prepare%20Abstract%20of%20Bids');
+            var buttons = document.querySelectorAll(".run-geoprocessing-tool");
+            buttons.forEach(function(button) {
+                button.setAttribute("data-original-text", button.innerHTML);
+                button.addEventListener("click", function(event) {
+                    event.preventDefault();
+                    executeGeoprocessing(this.getAttribute("data-service-url"), this);
+                });
             });
-
-            var link2 = document.getElementById("run-geoprocessing-tool-2");
-            link2.addEventListener("click", function(event) {
-                event.preventDefault();
-                executeGeoprocessing('https://arcportal-ucop-corps.usace.army.mil/gp/rest/services/Service2/GPServer/Service2');
-            });
-
-            // Add similar blocks for more buttons as required
         });
     </script>
 </head>
@@ -81,6 +84,12 @@
     body {
         font-family: Arial, sans-serif;
     }
+
+
+    .run-geoprocessing-tool.loading {
+        cursor: not-allowed;
+        background-color: #aaa;
+    }
     
     .button-container {
         display: flex;
@@ -90,7 +99,7 @@
 
 <body>
     <div class="button-container">
-        <a href="#" id="run-geoprocessing-tool-1" class="run-geoprocessing-tool">Abstract (Scaled)</a>
+        <a href="#" data-service-url="https://arcportal-ucop-corps.usace.army.mil/gp/rest/services/PrepareAbstractOfBids/GPServer/Prepare%20Abstract%20of%20Bids" id="run-geoprocessing-tool-1" class="run-geoprocessing-tool">Abstract (Scaled)</a>
         <a href="#" id="run-geoprocessing-tool-2" class="run-geoprocessing-tool">Abstract (Lump Sum)</a>
         <a href="#" id="run-geoprocessing-tool-3" class="run-geoprocessing-tool">Check Return Letter</a>
         <a href="#" id="run-geoprocessing-tool-4" class="run-geoprocessing-tool">No Bids Returned Statement</a>
