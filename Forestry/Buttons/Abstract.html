@@ -4,64 +4,14 @@
 <head>
     <meta charset="utf-8">
     <title>Print Abstract of Bids</title>
-    <script src="https://js.arcgis.com/4.20/"></script>
-    <script>
-        function executeGeoprocessing(serviceURL, clickedButton) {
-            var outputFileUrl;
-            var params = {};
-            var urlParams = new URLSearchParams(window.location.search);
-            params.contract = urlParams.get('cid');
-            
-            // Change the button to show loading icon
-            clickedButton.innerHTML = "Loading...";
-            clickedButton.classList.add("loading");
-
-            require([
-                "esri/tasks/Geoprocessor",
-                "esri/rest/support/JobInfo"
-            ], function(Geoprocessor, JobInfo) {
-                var gp = new Geoprocessor(serviceURL);
-                gp.submitJob(params).then((jobInfo) => {
-                    const jobid = jobInfo.jobId;
-
-                    const options = {
-                        interval: 1500,
-                        statusCallback: (j) => {
-                            console.log("Job Status: ", j.jobStatus);
-                        }
-                    };
-
-                    jobInfo.waitForJobCompletion(options).then(() => {
-                        jobInfo.fetchResultData('outfile').then(function(result) {
-                            outputFileUrl = result.value.url;
-                            window.open(outputFileUrl, "_blank");
-
-                            // Restore the button to its original state
-                            clickedButton.innerHTML = clickedButton.getAttribute("data-original-text");
-                            clickedButton.classList.remove("loading");
-                        });
-                    });
-                });
-            });
-        }
-
-        document.addEventListener("DOMContentLoaded", function(event) {
-            var buttons = document.querySelectorAll(".run-geoprocessing-tool");
-            buttons.forEach(function(button) {
-                button.setAttribute("data-original-text", button.innerHTML);
-                button.addEventListener("click", function(event) {
-                    event.preventDefault();
-                    executeGeoprocessing(this.getAttribute("data-service-url"), this);
-                });
-            });
-        });
-    </script>
+    <!-- <script src="https://js.arcgis.com/4.20/"></script> -->
+    <!-- Removed Esri method due to 'Muliple Define error' when opening page -->
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.js"></script>
 </head>
 <style>
     .run-geoprocessing-tool {
         display: inline-block;
-        background-color: #7b8361
-;
+        background-color: #7b8361;
         color: white;
         padding: 5px 10px;
         text-align: center;
@@ -75,12 +25,12 @@
         transition: font-weight 0.3s;
         /* Added transition for font-weight */
     }
-    
+
     .run-geoprocessing-tool:hover {
         border: 2px solid black;
         /* Font goes bold on hover */
     }
-    
+
     body {
         font-family: Arial, sans-serif;
     }
@@ -90,24 +40,136 @@
         cursor: not-allowed;
         background-color: #aaa;
     }
-    
+
     .button-container {
         display: flex;
         justify-content: center;
     }
 </style>
 
+<script>
+
+    function ensureString(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        return String(value);
+    }
+
+
+    //require(["esri/request"], function(esriRequest) {
+
+    async function generateAbstractPDF(contractId) {
+        try {
+
+            //   // Fetch contract details
+            //   let sale = await esriRequest({
+            //       url: `https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/0/query`,
+            //       content: {
+            //           where: `contractid='${contractId}'`,
+            //           outFields: '*',
+            //           returnGeometry: false,
+            //           f: 'json'
+            //       }
+            //   });
+
+            //   let pgid = sale.data.features[0].attributes.GlobalID;
+
+            //   // Fetch bids details
+            //   let bids = await esriRequest({
+            //       url: `https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/8/query`,
+            //       content: {
+            //           where: `parentglobalid='${pgid}'`,
+            //           outFields: '*',
+            //           returnGeometry: false,
+            //           f: 'json'
+            //       }
+            //   });
+            let saleResponse = await fetch(`https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/0/query?where=contractid='${contractId}'&outFields=*&returnGeometry=false&f=json`);
+            let sale = await saleResponse.json();
+
+            let pgid = sale.features[0].attributes.GlobalID;
+            console.log(pgid)
+            // Fetch bids details using AJAX
+            let bidsResponse = await fetch(`https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Forestry/FeatureServer/8/query?where=parentglobalid='${pgid}'&outFields=*&returnGeometry=false&f=json`);
+            let bids = await bidsResponse.json();
+
+            // Fetch PDF template
+            let pdfResponse = await fetch("https://geojason.github.io/Forestry/Templates/Abstract_of_Bids.pdf");
+            let pdfBuffer = await pdfResponse.arrayBuffer();
+
+            const { PDFDocument } = window.PDFLib;
+
+            // Load and modify the PDF
+            const pdfDoc = await PDFDocument.load(pdfBuffer);
+            const form = pdfDoc.getForm();
+
+            let date = new Date(sale.features[0].attributes.InvitationDate);
+            const formattedDate = `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`;
+
+            const fieldmap = {
+                'Timber Sale Name': sale.features[0].attributes.ContractTitle,
+                'Invitation No': sale.features[0].attributes.InvitationID,
+                'Bid Opening Date': formattedDate,
+                'Legal Description': sale.features[0].attributes.TownshipRangeSection,
+                'Contract No': sale.features[0].attributes.ContractID,
+                'Product': sale.features[0].attributes.PrimarySpecies.replace('_', ' ')
+                //'Name and Title': sale.features[0].attributes.PurchaserPOC
+            };
+
+            const bidsData = bids.features; // Assuming "bids" is the parsed JSON response from your AJAX request
+
+            for (let index = 0; index < bidsData.length; index++) {
+                let bidAttributes = bidsData[index].attributes;
+                fieldmap['BIDDER NAME AND ADDRESS' + (index + 1)] = bidAttributes['biddername'] + '\n' + bidAttributes['bidderaddress'];
+                fieldmap[String(index + 1)] = bidAttributes['unitbid'];
+                fieldmap[String(index + 1) + '_' + "2"] = ''; // This seems to be setting an empty value in the Python code
+                fieldmap['BID DEPOSIT' + (index + 1)] = bidAttributes['biddeposit'];
+            }
+
+
+            console.log(fieldmap)
+            for (let fieldName in fieldmap) {
+                const field = form.getField(fieldName);
+                if (field) field.setText(ensureString(fieldmap[fieldName]));
+            }
+
+
+            // Serialize the modified PDF and offer it for download
+            const modifiedPdfBytes = await pdfDoc.save();
+
+            const blob = new Blob([modifiedPdfBytes], { type: "application/pdf" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "Contract_"+contractId+"_AbstractOfBids.pdf";
+            link.click();
+
+        } catch (error) {
+            console.error("Error generating PDF:", error);
+        }
+    }
+
+    // Add event listener to the button
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("generateAbstractPDF").addEventListener("click", function (event) {
+            event.preventDefault();
+            const urlParams = new URLSearchParams(window.location.search);
+            const contractId = urlParams.get('cid');
+            console.log(contractId);
+            generateAbstractPDF(contractId);
+        });
+    });
+
+//});
+</script>
+
 <body>
     <div class="button-container">
-        <a href="#" data-service-url="https://arcportal-ucop-corps.usace.army.mil/gp/rest/services/PrepareAbstractOfBids/GPServer/Prepare%20Abstract%20of%20Bids" id="run-geoprocessing-tool-1" class="run-geoprocessing-tool">Abstract (Scaled)</a>
+        <a href="#" id="generateAbstractPDF" class="run-geoprocessing-tool">Abstract (Scaled)</a>
         <a href="#" id="run-geoprocessing-tool-2" class="run-geoprocessing-tool">Abstract (Lump Sum)</a>
         <a href="#" id="run-geoprocessing-tool-3" class="run-geoprocessing-tool">Check Return Letter</a>
         <a href="#" id="run-geoprocessing-tool-4" class="run-geoprocessing-tool">No Bids Returned Statement</a>
     </div>
 </body>
 
-
 </html>
-
-
-
