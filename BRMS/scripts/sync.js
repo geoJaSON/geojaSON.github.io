@@ -310,6 +310,8 @@ require([
         }
 
         function createSecondChart() {
+            const series1Data = lowProdData(missionAssignmentStartDate);
+            const series2Data = highProdData(missionAssignmentStartDate);
 
             Highcharts.chart('line-chart-container', {
                 chart: {
@@ -400,6 +402,26 @@ require([
                 }, {
                     name: 'Forecast Installs',
                     data: cumulativeData.forecast
+                }, {
+                    name: 'Ramp Up Low Production',
+
+                    data: series1Data,
+                    color: 'black',
+                    dashStyle: 'Dash',
+                    marker: {
+                        enabled: false
+                    }
+
+                }, {
+                    name: 'Ramp Up High Production',
+
+                    data: series2Data,
+                    color: 'gray',
+                    dashStyle: 'Dash',
+                    marker: {
+                        enabled: false
+                    }
+
                 }],
                 annotations: annotationdata,
 
