@@ -59,7 +59,7 @@
 
     //require(["esri/request"], function(esriRequest) {
 
-    async function generateAbstractPDF(contractId) {
+    async function ScaledAbstract(contractId) {
         try {
 
             //   // Fetch contract details
@@ -148,15 +148,61 @@
             console.error("Error generating PDF:", error);
         }
     }
+    
+    async function SumAbstract(contractId) {
+        alert(contractId)
+    }
+
+    async function CheckReturn(contractId) {
+        alert(contractId)
+    }
+
+    async function NoBids(contractId) {
+        alert(contractId)
+    }
+
 
     // Add event listener to the button
     document.addEventListener("DOMContentLoaded", function () {
-        document.getElementById("generateAbstractPDF").addEventListener("click", function (event) {
+        document.getElementById("ScaledAbstract").addEventListener("click", function (event) {
             event.preventDefault();
             const urlParams = new URLSearchParams(window.location.search);
             const contractId = urlParams.get('cid');
             console.log(contractId);
-            generateAbstractPDF(contractId);
+            ScaledAbstract(contractId);
+        });
+    });
+
+    // Add event listener to the button
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("SumAbstract").addEventListener("click", function (event) {
+            event.preventDefault();
+            const urlParams = new URLSearchParams(window.location.search);
+            const contractId = urlParams.get('cid');
+            console.log(contractId);
+            SumAbstract(contractId);
+        });
+    });
+
+    // Add event listener to the button
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("CheckReturn").addEventListener("click", function (event) {
+            event.preventDefault();
+            const urlParams = new URLSearchParams(window.location.search);
+            const contractId = urlParams.get('cid');
+            console.log(contractId);
+            CheckReturn(contractId);
+        });
+    });
+
+    // Add event listener to the button
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("NoBids").addEventListener("click", function (event) {
+            event.preventDefault();
+            const urlParams = new URLSearchParams(window.location.search);
+            const contractId = urlParams.get('cid');
+            console.log(contractId);
+            NoBids(contractId);
         });
     });
 
@@ -165,10 +211,10 @@
 
 <body>
     <div class="button-container">
-        <a href="#" id="generateAbstractPDF" class="run-geoprocessing-tool">Abstract (Scaled)</a>
-        <a href="#" id="run-geoprocessing-tool-2" class="run-geoprocessing-tool">Abstract (Lump Sum)</a>
-        <a href="#" id="run-geoprocessing-tool-3" class="run-geoprocessing-tool">Check Return Letter</a>
-        <a href="#" id="run-geoprocessing-tool-4" class="run-geoprocessing-tool">No Bids Returned Statement</a>
+        <a href="#" id="ScaledAbstract" class="run-geoprocessing-tool">Abstract (Scaled)</a>
+        <a href="#" id="SumAbstract" class="run-geoprocessing-tool">Abstract (Lump Sum)</a>
+        <a href="#" id="CheckReturn" class="run-geoprocessing-tool">Check Return Letter</a>
+        <a href="#" id="NoBids" class="run-geoprocessing-tool">No Bids Returned Statement</a>
     </div>
 </body>
 
