@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // GET PROJECTS
     function executeEsriRequest(divDistValue) {
         require(["esri/request", "dojo/domReady!"], function (esriRequest) {
-            esriRequest("https://geoportal.nwd.usace.army.mil/g0arcgis/rest/services/Hosted/REMIS_Tasks/FeatureServer/3/query", {
+            esriRequest("https://geoportal.nwd.usace.army.mil/g0arcgis/rest/services/Hosted/REMIS_Tasks/FeatureServer/1/query", {
                 responseType: "json",
                 query: {
                     where: "div_dist='" + divDistValue + "'",
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
         "esri/portal/PortalQueryParams", "dojo/domReady!"
     ], function (IdentityManager, esriRequest, Portal, PortalQueryParams) {
         // Fetch the data when the document is ready
-        esriRequest("https://geoportal.nwd.usace.army.mil/g0arcgis/rest/services/Hosted/REMIS_Tasks/FeatureServer/1/query", {
+        esriRequest("https://geoportal.nwd.usace.army.mil/g0arcgis/rest/services/Hosted/REMIS_Tasks/FeatureServer/2/query", {
             responseType: "json",
             query: {
                 where: "1=1",
