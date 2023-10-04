@@ -328,9 +328,9 @@ rafterInput.value = totalRafterLength.toFixed(2); // Assume you want to display 
         </select>
         </div>
         <div class="form-group">
-        <div class="form-check form-switch">
-            <input type="checkbox" class="form-check-input" id="toggle-switch" role="switch" ${area < 50 ? 'checked' : ''}>
-        </div>
+        <div class="form-check form-switch" data-bs-toggle="tooltip" data-bs-placement="top" title="Small Roof Repair">
+        <input type="checkbox" class="form-check-input" id="toggle-switch" role="switch" ${area < 50 ? 'checked' : ''}>
+    </div>
         </div>
 
                         `;
@@ -482,3 +482,7 @@ document.querySelectorAll('.status-selector input[type="radio"]').forEach(functi
 
     });
 });
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
