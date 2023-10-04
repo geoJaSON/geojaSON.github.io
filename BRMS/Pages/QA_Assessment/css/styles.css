@@ -1,0 +1,146 @@
+html,
+body,
+body, html {
+    overflow-x: hidden; /* Hiding horizontal scroll */
+    max-width: 100%; /* Ensuring no horizontal overflow */
+}
+
+/* Overriding potential paddings or margins that might cause overflow */
+.row, .col-md-6 {
+    margin: 0;
+    padding: 0;
+}
+
+.grid-container {
+    box-sizing: border-box; /* Ensuring padding and border are included in element's total width and height */
+}
+
+#viewDiv {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+#title {
+    background-color: #f0f0f0;
+    padding: 0px;
+    text-align: center;
+}
+
+#summary {
+    background-color: #f0f0f0;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    max-height: 25vh;
+    /* max height of 25% of viewport height */
+    overflow-y: auto;
+    /* scroll if content is too tall */
+}
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+#viewDiv {
+    flex: 1;
+}
+
+#summary .column {
+    flex: 1;
+    padding: 0 10px;
+}
+
+#summary select {
+    width: 100%;
+}
+
+
+.submit-btn {
+    display: flex;
+    justify-content: center;
+}
+
+.submit-btn input {
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.submit-btn input:hover {
+    background-color: #45a049;
+}
+
+
+.column {
+    flex: 1;
+    padding: 10px;
+}
+
+
+#tabContainer {
+    height: auto;
+    /* Adjusted height to auto to accommodate dynamic rows */
+    background-color: #f0f0f0;
+    overflow: hidden;
+}
+
+/* Adapted the .tab to behave as a row */
+.tab {
+    display: flex;
+    /* Set display to flex to make children lay out horizontally */
+    padding: 10px;
+    align-items: center;
+    justify-content: space-around;
+    /* Distribute space around elements */
+    border-bottom: 1px solid #ccc;
+    /* Add border to separate rows */
+}
+
+.tab label {
+    margin: 0 10px;
+    /* Add margin to separate label and input/select elements */
+}
+
+/* Added flex-basis to set base width for the fields */
+.tab input[type="text"],
+.tab select {
+    flex-basis: 150px;
+}
+
+/* Modified to fit your modified structure */
+.tab-buttons {
+    display: none;
+    /* hiding tab buttons, as they are not used in a row structure */
+}
+.grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 columns of equal width */
+    grid-template-rows: auto auto;   /* 2 rows, height determined by content */
+    gap: 5px;                       /* space between grid items */
+}
+
+.debris-selector {
+    grid-column: span 2; /* takes full width of grid */
+}
+
+.status-selector {
+    grid-row: span 2;    /* takes full height of 2 rows */
+}
+.btn.btn-outline-primary:hover {
+    background-color: yellow;
+    border-color: black; /* Optionally, you can change the border color as well */
+    color: black; /* Optionally, you can change the text color for better contrast */
+}
+
+/* Custom CSS to make the button yellow when clicked */
+.btn.btn-outline-primary:active {
+    background-color: yellow;
+    border-color: black; /* Optionally, you can change the border color as well */
+    color: black; /* Optionally, you can change the text color for better contrast */
+}
