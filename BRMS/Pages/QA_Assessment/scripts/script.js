@@ -1,6 +1,8 @@
 require([
+    "esri/config",
     "esri/widgets/Sketch",
     "esri/Map",
+    "esri/WebMap",
     "esri/layers/GraphicsLayer",
     "esri/views/MapView",
     "esri/geometry/geometryEngine",
@@ -9,8 +11,9 @@ require([
     "esri/views/interactive/snapping/SnappingOptions",
     "esri/symbols/SimpleFillSymbol",
 "esri/symbols/SimpleLineSymbol",
-], (Sketch, Map, GraphicsLayer, MapView, geometryEngine, IdentityManager, esriRequest, SnappingOptions, SimpleFillSymbol, SimpleLineSymbol) => {
-
+], (esriConfig, Sketch, Map, WebMap, GraphicsLayer, MapView, geometryEngine, IdentityManager, esriRequest, SnappingOptions, SimpleFillSymbol, SimpleLineSymbol) => {
+    esriConfig.portalUrl = "https://arcportal-ucop-corps.usace.army.mil/s0portal";
+    esriConfig.request.trustedServers.push("https://arcportal-ucop-corps.usace.army.mil/s0portal");
     const graphicsLayer = new GraphicsLayer({});
 
     const rafterGraphicsLayer = new GraphicsLayer({});
@@ -77,16 +80,32 @@ require([
 
 
     function createMapAndActions(x, y) {
-        const map = new Map({
-            basemap: "hybrid",
-            layers: [graphicsLayer, rafterGraphicsLayer]
+        
+        const webmap = new WebMap({
+            portalItem: {
+                id: "da4e92b2209b476aaba02581bcc80b93"
+            }
         });
+
         view = new MapView({
             container: "viewDiv",
-            map: map,
+            map: webmap,
             zoom: 20,
             center: [x, y]
         });
+        webmap.add(graphicsLayer);
+            webmap.add(rafterGraphicsLayer);
+
+        // const map = new Map({
+        //     basemap: "hybrid",
+        //     layers: [graphicsLayer, rafterGraphicsLayer]
+        // });
+        // view = new MapView({
+        //     container: "viewDiv",
+        //     map: map,
+        //     zoom: 20,
+        //     center: [x, y]
+        // });
 
         view.when(() => {
             const sketch = new Sketch({
