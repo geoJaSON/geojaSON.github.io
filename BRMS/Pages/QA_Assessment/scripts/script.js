@@ -22,7 +22,7 @@ require([
         responseType: "json",
         query: {
             where: "roeidpk='" + roe + "'",
-            outFields: "roeidpk,appfirstname,applastname,appaddress,appcity,appzipcode,appprimaryphone",
+            outFields: "OBJECTID,roeidpk,appfirstname,applastname,appaddress,appcity,appzipcode,appprimaryphone",
             f: "json"
         }
     });

@@ -1,5 +1,5 @@
 // Assuming your submit button has an ID of 'submitBtn'
-document.getElementById('dataForm').addEventListener('submit', function(event) {
+document.getElementById('dataForm').addEventListener('submit', function (event) {
     event.preventDefault();
     // if status select is complete
     var isCompleteSelected = document.getElementById('complete').checked;
@@ -10,25 +10,24 @@ document.getElementById('dataForm').addEventListener('submit', function(event) {
         return;
     }
     if (isCompleteSelected) {
-    view.takeScreenshot({ format: "png" }).then(function(screenshot) {
-        openScreenshotWindow(screenshot);
-        console.log(totals)
-    });
-}
+        view.takeScreenshot({ format: "png" }).then(function (screenshot) {
+            openScreenshotWindow(screenshot);
+        });
+    }
 });
 
 function openScreenshotWindow(screenshot) {
-        //Remove everything from username after last space
-        let usernameArray = username.split(' ');
-        // Keep everything except last element
-        usernameArray.pop();
-        // Join the array back into a string
-        let usernameNoSpace = usernameArray.join(' ');
+    //Remove everything from username after last space
+    let usernameArray = username.split(' ');
+    let roeData2 = roeData
+    // Keep everything except last element
+    usernameArray.pop();
+    // Join the array back into a string
+    let usernameNoSpace = usernameArray.join(' ');
 
-        let w = window.open("", "_blank"); // Open new window/tab
 
-        // Create an HTML string
-        let html = `
+    // Create an HTML string
+    let html = `
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -104,7 +103,7 @@ function openScreenshotWindow(screenshot) {
             </tr>
             <tr>
                 <td>Address:</td>
-                <td>${roeData.attributes['roeidappaddresspk']}</td>
+                <td>${roeData.attributes['appaddress']}</td>
                 <td>QA Name:</td>
                 <td>${usernameNoSpace}</td>
             </tr>
@@ -133,17 +132,17 @@ function openScreenshotWindow(screenshot) {
             <table class="center-table2">
                 <tr>
                     <td>Asphalt Shingle Roof - Plastic Sheeting</td>
-                    <td>${totals['Asphalt']}</td>
+                    <td>${totals['Asphalt'] || '0'}</td>
                     <td>Square Ft</td>
                 </tr>
                 <tr>
                     <td>Metal Roof - Plastic Sheeting</td>
-                    <td>${totals['Metal']}</td>
+                    <td>${totals['Metal'] || '0'}</td>
                     <td>Square Ft</td>
                 </tr>
                 <tr>
                     <td>Rafter Repair</td>
-                    <td>${raftersTotal}</td>
+                    <td>${raftersTotal || '0'}</td>
                     <td>Linear Ft</td>
                 </tr>
                 <tr>
@@ -171,7 +170,76 @@ function openScreenshotWindow(screenshot) {
         
                 `;
 
-        // Write HTML string to new window's document
-        w.document.write(html);
-        w.document.close();
+    let w = window.open("", "_blank"); // Open new window/tab
+
+    // Write HTML string to new window's document
+    w.document.write(html);
+    w.document.close();
+
+    // Pass the references of html2canvas and jsPDF to the new window
+    w.html2canvas = html2canvas;
+    w.jsPDF = window.jspdf.jsPDF; // Adjusting how we access jsPDF
+
+    // The onload function should refer to 'w' instead of window
+    w.onload = () => {
+        console.log('Window loaded');
+
+        // Here, create a div in the NEW window, not the original one
+        const hiddenDiv = w.document.createElement('div');
+        // hiddenDiv.style.visibility = 'hidden';
+        hiddenDiv.style.position = 'absolute';
+        hiddenDiv.innerHTML = html;
+        w.document.body.appendChild(hiddenDiv);
+
+        // Now, utilize the libraries within the new window
+        setTimeout(() => {
+            w.html2canvas(hiddenDiv).then(canvas => {
+                const imgData = canvas.toDataURL('image/jpeg');
+                // Using jsPDF reference in the new window
+                console.log(roeData2);
+                console.log(typeof roeData2);
+                console.log(roeData2['roeidpk']);
+                var doc = new w.jsPDF("p", "mm", "a4");
+                doc.setProperties({
+                    title: `ROE_${roeData2.attributes['roeidpk']}_Work_Order`,
+                });
+                var width = doc.internal.pageSize.getWidth();
+                var height = doc.internal.pageSize.getHeight();
+                doc.addImage(imgData, 'JPEG', 20, 10, width * .8, height * .75);
+                doc.save(`ROE_${roeData2.attributes['roeidpk']}_Work_Order.pdf`);
+                w.document.body.removeChild(hiddenDiv);
+                var blob = doc.output('blob'); // Convert the doc to a blob
+                require([
+                    "esri/layers/FeatureLayer",
+                    "esri/request"
+                ], function (FeatureLayer, esriRequest) {
+
+                    const featureLayer = new FeatureLayer({
+                        url: "https://arcportal-ucop-corps.usace.army.mil/esf3/rest/services/TempRoofing/BRMS/FeatureServer/0",
+                        // additional properties go here, if needed
+                    });
+
+                    const objectId = roeData2.attributes['OBJECTID'];
+                    const attachmentForm = new FormData();
+                    attachmentForm.append("attachment", blob, `ROE_${roeData2.attributes['roeidpk']}_Work_Order.pdf`); // Adding the blob as an attachment with a filename
+
+                    esriRequest(`${featureLayer.url}/${objectId}/addAttachment`, {
+                        method: "post",
+                        body: attachmentForm,
+                        responseType: "json"
+                    }).then(function (response) {
+                        console.log("Attachment added: ", response);
+                    }).catch(function (error) {
+                        console.error("Error: ", error);
+                        if (error.text) {
+                            error.text().then(function (text) {
+                                console.error("Server Response: ", text);
+                            });
+                        }
+                    });
+                }
+                )
+            });
+        }, 500); // 2000ms delay to ensure rendering
     }
+}
