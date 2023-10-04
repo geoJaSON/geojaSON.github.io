@@ -23,16 +23,18 @@
         <h4>Remote QA Assessment</h3>
     </div>
     <div id="viewDiv">
+        <div class="widget-label" id="lineLabel">Rafters</div>
+        <div class="widget-label" id="polygonLabel">Areas to Tarp</div>
     </div>
     <div id="tabContainer">
         <div class="tab-buttons"></div>
         <div class="tabs-content"></div>
     </div>
-    <div>   
-        <input type="text" id="internalcomments" class="form-control" placeholder = 'Internal Comments'/>
+    <div>
+        <input type="text" id="internalcomments" class="form-control" placeholder='Internal Comments' />
     </div>
-    <div>   
-        <input type="text" id="comments" class="form-control" placeholder = 'Comments to Contractor'/>
+    <div>
+        <input type="text" id="comments" class="form-control" placeholder='Comments to Contractor' />
     </div>
     <div class="row">
         <div class="col-md-6" id="summary">
@@ -45,58 +47,58 @@
         </div>
         <div class="col-md-6" id="dataEntry">
             <form id="dataForm">
-            <div class="grid-container">
-                <div class="debris-selector">
-                    <select class="form-select" id="debris" required>
-                        <option selected>Select Debris</option>
-                        <option value="None">None</option>
-                        <option value="Minor">Minor</option>
-                        <option value="Major">Major</option>
-                    </select>
+                <div class="grid-container">
+                    <div class="debris-selector">
+                        <select class="form-select" id="debris" required>
+                            <option selected>Select Debris</option>
+                            <option value="None">None</option>
+                            <option value="Minor">Minor</option>
+                            <option value="Major">Major</option>
+                        </select>
+                    </div>
+                    <!-- Status Selector -->
+                    <div class="status-selector">
+                        <input type="radio" class="btn-check" id="complete" name="status" required />
+                        <label class="btn btn-sm btn-outline-success" for="complete">Assessment Complete</label>
+
+                        <input type="radio" class="btn-check" id="unable" name="status" />
+                        <label class="btn btn-sm btn-outline-primary" for="unable">Unable to Assess Remotely</label>
+
+                        <input type="radio" class="btn-check" id="cancellation" name="status" />
+                        <label class="btn btn-sm btn-outline-danger" for="cancellation">Cancellation</label>
+
+                        <input type="radio" class="btn-check" id="disqualified" name="status" />
+                        <label class="btn btn-sm btn-outline-danger" for="disqualified">Disqualified</label>
+                    </div>
+
+                    <!-- Reason Selector -->
+                    <div class="status-reason-selector" id="qareasonSelector" style="display:none;">
+                        <select class="form-select" id="qastatusReason" disabled>
+                            <option selected>Select Reason</option>
+                            <option value="Bad Imagery">Bad Imagery</option>
+                            <option value="Unable to Determine Damage">Unable to Determine Damage</option>
+                        </select>
+                    </div>
+                    <div class="status-reason-selector" id="dqreasonSelector" style="display:none;">
+                        <select class="form-select" id="dqstatusReason" disabled>
+                            <option selected>Select Reason</option>
+                            <option value="Outside FEMA Area">Outside FEMA Area</option>
+                            <option value="More than 50% Damage">More than 50% Damage</option>
+                            <option value="Not a Residence">Not a Residence</option>
+                            <option value="Tile or Slate Roof">Tile or Slate Roof</option>
+                            <option value="Asbestos Roof">Asbestos Roof</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="submit-btn">
+                        <input type="submit" value="Submit">
+                    </div>
                 </div>
-                <!-- Status Selector -->
-<div class="status-selector">
-    <input type="radio" class="btn-check" id="complete" name="status" required/>
-    <label class="btn btn-sm btn-outline-success" for="complete">Assessment Complete</label>
-    
-    <input type="radio" class="btn-check" id="unable" name="status" />
-    <label class="btn btn-sm btn-outline-primary" for="unable">Unable to Assess Remotely</label>
-    
-    <input type="radio" class="btn-check" id="cancellation" name="status" />
-    <label class="btn btn-sm btn-outline-danger" for="cancellation">Cancellation</label>
-    
-    <input type="radio" class="btn-check" id="disqualified" name="status" />
-    <label class="btn btn-sm btn-outline-danger" for="disqualified">Disqualified</label>
-</div>
-
-<!-- Reason Selector -->
-<div class="status-reason-selector" id="qareasonSelector" style="display:none;">
-    <select class="form-select" id="qastatusReason" disabled>
-        <option selected>Select Reason</option>
-        <option value="Bad Imagery">Bad Imagery</option>
-        <option value="Unable to Determine Damage">Unable to Determine Damage</option>
-    </select>
-</div>
-<div class="status-reason-selector" id="dqreasonSelector" style="display:none;">
-    <select class="form-select" id="dqstatusReason" disabled>
-        <option selected>Select Reason</option>
-        <option value="Outside FEMA Area">Outside FEMA Area</option>
-        <option value="More than 50% Damage">More than 50% Damage</option>
-        <option value="Not a Residence">Not a Residence</option>
-        <option value="Tile or Slate Roof">Tile or Slate Roof</option>
-        <option value="Asbestos Roof">Asbestos Roof</option>
-        <option value="Other">Other</option>
-    </select>
-</div>
-
-<div class="submit-btn">
-    <input type="submit" value="Submit">
-</div>
-            </div>
             </form>
         </div>
-        </div>
-    
+    </div>
+
 </body>
 
 

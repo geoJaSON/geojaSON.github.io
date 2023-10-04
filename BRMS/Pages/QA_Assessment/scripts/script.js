@@ -93,8 +93,7 @@ require([
             zoom: 20,
             center: [x, y]
         });
-        webmap.add(graphicsLayer);
-            webmap.add(rafterGraphicsLayer);
+        
 
         // const map = new Map({
         //     basemap: "hybrid",
@@ -232,6 +231,8 @@ require([
                     updateSummary();
                 });
             });
+            webmap.add(graphicsLayer);
+            webmap.add(rafterGraphicsLayer);
             view.ui.add(sketch, "top-right");
             view.ui.add(sketchRafter, "top-right");
         });

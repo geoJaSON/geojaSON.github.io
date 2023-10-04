@@ -144,3 +144,22 @@ body {
     border-color: black; /* Optionally, you can change the border color as well */
     color: black; /* Optionally, you can change the text color for better contrast */
 }
+.widget-label {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white */
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 99; /* Ensure labels are above other map elements */
+}
+
+/* Additional specific positioning for each label */
+#lineLabel {
+    top: 110px; /* Adjust according to actual widget position */
+    right: 180px; /* Adjust according to actual widget position */
+}
+
+#polygonLabel {
+    top: 60px; /* Adjust according to actual widget position */
+    right: 180px;   /* Adjust according to actual widget position */
+}

@@ -112,13 +112,14 @@ function openScreenshotWindow(screenshot) {
                 <td>County/City/Zip:</td>
                 <td>${roeData.attributes['appcity']} / ${roeData.attributes['appzipcode']} / ${roeData.attributes['appcounty']}</td>
                 <td>Date Assessed:</td>
-                <td></td>
+                <td>${new Date().toLocaleDateString()}</td>
+                
             </tr>
             <tr>
                 <td>Phone:</td>
                 <td>${roeData.attributes['appprimaryphone']}</td>
                 <td>Comment:</td>
-                <td>${roeData.attributes['approecomments']}</td>
+                <td>${roeData.attributes['approecomments'] || ''}</td>
             </tr>
             <tr>
                 <td>GPS Latitude:</td>
