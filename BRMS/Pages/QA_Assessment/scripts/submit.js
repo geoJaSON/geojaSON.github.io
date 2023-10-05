@@ -184,16 +184,16 @@ function openScreenshotWindow(screenshot) {
     w.onload = () => {
         console.log('Window loaded');
 
-        // Here, create a div in the NEW window, not the original one
-        const hiddenDiv = w.document.createElement('div');
-        // hiddenDiv.style.visibility = 'hidden';
-        hiddenDiv.style.position = 'absolute';
-        hiddenDiv.innerHTML = html;
-        w.document.body.appendChild(hiddenDiv);
+        // // Here, create a div in the NEW window, not the original one
+        // const hiddenDiv = w.document.createElement('div');
+        // // hiddenDiv.style.visibility = 'hidden';
+        // hiddenDiv.style.position = 'absolute';
+        // hiddenDiv.innerHTML = html;
+        // w.document.body.appendChild(hiddenDiv);
 
         // Now, utilize the libraries within the new window
         setTimeout(() => {
-            w.html2canvas(hiddenDiv).then(canvas => {
+            w.html2canvas(w.document.body).then(canvas => {
                 const imgData = canvas.toDataURL('image/jpeg');
                 // Using jsPDF reference in the new window
                 console.log(roeData2);
@@ -207,7 +207,7 @@ function openScreenshotWindow(screenshot) {
                 var height = doc.internal.pageSize.getHeight();
                 doc.addImage(imgData, 'JPEG', 20, 10, width * .8, height * .75);
                 doc.save(`ROE_${roeData2.attributes['roeidpk']}_Work_Order.pdf`);
-                w.document.body.removeChild(hiddenDiv);
+                // w.document.body.removeChild(hiddenDiv);
                 var blob = doc.output('blob'); // Convert the doc to a blob
                 require([
                     "esri/layers/FeatureLayer",
