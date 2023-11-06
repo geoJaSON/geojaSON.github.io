@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let featureMap = new Map();
 
-    // Get the input field associated with the datalist
+    // Get the input field associated with the selected project
     const inputField = document.getElementById('p_proj_id');
 
     inputField.addEventListener('input', function (e) {
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
         }).then(function (response) {
-            if(IdentityManager.credentials && IdentityManager.credentials[0]) {
+            if (IdentityManager.credentials && IdentityManager.credentials[0]) {
                 userid = IdentityManager.credentials[0].userId;
                 console.log(userid);
             } else {
@@ -153,13 +153,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
             userSelect.innerHTML = '';
 
-            // Sort and iterate through features
+            // Sort the employees by name
             const sortedFeatures = response.data.features.sort((a, b) => {
                 if (a.attributes.em_name < b.attributes.em_name) return -1;
                 if (a.attributes.em_name > b.attributes.em_name) return 1;
                 return 0;
             });
 
+            //Add employees to the dropdown
             sortedFeatures.forEach(feature => {
                 const option = document.createElement('option');
                 option.value = feature.attributes.em_name;

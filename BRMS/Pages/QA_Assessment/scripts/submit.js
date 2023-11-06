@@ -211,8 +211,9 @@ function openScreenshotWindow(screenshot) {
                 var blob = doc.output('blob'); // Convert the doc to a blob
                 require([
                     "esri/layers/FeatureLayer",
-                    "esri/request"
-                ], function (FeatureLayer, esriRequest) {
+                    "esri/request",
+                    "esri/identity/IdentityManager"
+                ], function (FeatureLayer, esriRequest,IdentityManager) {
 
                     const featureLayer = new FeatureLayer({
                         url: "https://arcportal-ucop-corps.usace.army.mil/esf3/rest/services/TempRoofing/BRMS/FeatureServer/0",
@@ -221,7 +222,7 @@ function openScreenshotWindow(screenshot) {
 
                     const objectId = roeData2.attributes['OBJECTID'];
                     const attachmentForm = new FormData();
-                    attachmentForm.append("attachment", blob, `ROE_${roeData2.attributes['roeidpk']}_Work_Order.pdf`); // Adding the blob as an attachment with a filename
+                    attachmentForm.append("attachment", doc); // Adding the blob as an attachment with a filename
 
                     esriRequest(`${featureLayer.url}/${objectId}/addAttachment`, {
                         method: "post",

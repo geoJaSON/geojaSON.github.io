@@ -30,9 +30,9 @@ require([
     purchaserRequest.then(
         function (response) {
 
-
-            let userId = IdentityManager.credentials[0].userId;
-
+            let userId = 'g3retjjj@NWD'
+            //let userId = IdentityManager.credentials[0].userId;
+            
             esriRequest("https://arcportal-ucop-corps.usace.army.mil/s0portal/sharing/rest/community/users/" + userId, {
                 query: {
                     f: "json",
