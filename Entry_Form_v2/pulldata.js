@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 query: {
                     where: "div_dist='" + divDistValue + "'",
                     outFields: "*",
-                    resultRecordCount: 20000,
+                    resultRecordCount: 50000,
                     f: "json"
                 }
             }).then(function (response) {
