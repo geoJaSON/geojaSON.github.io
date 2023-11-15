@@ -115,6 +115,16 @@
             width: 100%;
         }
 
+        #precipDiv {
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            width: 100%;
+        }
+
         .forecast-item {
             margin: 0 10px;
             text-align: center;
@@ -157,21 +167,21 @@
 
 
         .card-body .background-image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  opacity: 0.5; /* Adjust the opacity as needed */
-  z-index: -1;
-}
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            opacity: 0.5;
+            /* Adjust the opacity as needed */
+            z-index: -1;
+        }
 
-.card-body {
-  position: relative;
-  z-index: 1;
-}
-
+        .card-body {
+            position: relative;
+            z-index: 1;
+        }
     </style>
 </head>
 
@@ -307,6 +317,9 @@
                     <div id="uavDiv" class="h-100 d-none">
                         <!-- Hourly content here -->
                     </div>
+                    <div id="precipDiv" class="h-100 d-none">
+                        <!-- Hourly content here -->
+                    </div>
                 </div>
 
 
@@ -401,7 +414,7 @@
                 console.log('Hourly Fetched')
 
                 const container = document.getElementById('forecastDiv');
-
+                container.innerHTML = '';
 
                 dailyForecastData['periods'].forEach(forecast => {
                     const forecastDiv = document.createElement('div');
@@ -452,15 +465,15 @@
                 });
                 let quantitativePrecipitation = hourlyForecastData['quantitativePrecipitation']['values'].map(item => {
                     let date = new Date(item.validTime.split("/")[0]); // Parsing the date
-                    return [date.getTime(), item.value];
+                    return [date.getTime(), item.value * 0.0393701];
                 });
                 let iceAccumulation = hourlyForecastData['iceAccumulation']['values'].map(item => {
                     let date = new Date(item.validTime.split("/")[0]); // Parsing the date
-                    return [date.getTime(), item.value];
+                    return [date.getTime(), item.value * 0.0393701];
                 });
                 let snowfallAmount = hourlyForecastData['snowfallAmount']['values'].map(item => {
                     let date = new Date(item.validTime.split("/")[0]); // Parsing the date
-                    return [date.getTime(), item.value];
+                    return [date.getTime(), item.value * 0.0393701];
                 });
                 let ceilingHeight = hourlyForecastData['ceilingHeight']['values'].map(item => {
                     let date = new Date(item.validTime.split("/")[0]); // Parsing the date
@@ -589,6 +602,9 @@
                             color: 'white' // Change this to the desired color
                         }
                     },
+                    credits: {
+                        enabled: false
+                    },
                     chart: {
                         type: 'line',
                         zoomType: 'xy',
@@ -598,7 +614,10 @@
 
                     },
                     title: {
-                        text: null
+                        text: 'Hourly Forecast',
+                        style: {
+                            color: 'white'
+                        }
                     },
                     xAxis: {
                         type: 'datetime',
@@ -759,8 +778,14 @@
                         height: null
 
                     },
+                    credits: {
+                        enabled: false
+                    },
                     title: {
-                        text: null
+                        text: 'UAV Operations',
+                        style: {
+                            color: 'white'
+                        }
                     },
                     xAxis: {
                         type: 'datetime',
@@ -851,6 +876,125 @@
                     ]
                 });
 
+                Highcharts.chart('precipDiv', {
+                    legend: {
+                        itemStyle: {
+                            color: 'white' // Change this to the desired color
+                        }
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    chart: {
+                        type: 'line',
+                        zoomType: 'xy',
+                        backgroundColor: '#f9f8f800',
+                        width: null,
+                        height: null
+
+                    },
+                    title: {
+                        text: 'Precipitation Accumulation',
+                        style: {
+                            color: 'white'
+                        }
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        plotLines: [{
+                            value: Date.now(),
+                            color: 'white',
+                            width: 2,
+                            zIndex: 5,
+                            label: {
+                                text: 'Now',
+                                align: 'center',
+                                style: {
+                                    color: 'white'
+                                }
+                            }
+                        }],
+                        title: {
+                            text: null
+                        },
+                        labels: {
+                            style: {
+                                color: '#FFFFFF' // white y-axis labels
+                            }
+                        }
+                    },
+                    yAxis: [{
+                        title: {
+                            text: 'Total Precip (in)',
+                            style: {
+                                color: 'yellow'
+                            }
+                        },
+                        min: 0,
+                        labels: {
+                            style: {
+                                color: 'yellow' // white y-axis labels
+                            }
+                        }
+                    }, { // Secondary yAxis for Wind Speed
+                        title: {
+                            text: 'Snow (in)',
+                            style: {
+                                color: 'white'
+                            }
+                        },
+                        labels: {
+                            format: '{value}',
+                            style: {
+                                color: 'white'
+                            },
+
+                        },
+                        min: 0,
+                        opposite: true,
+                    }, { // Tertiary yAxis for Ice
+                        title: {
+                            text: 'Ice (in)',
+                            style: {
+                                color: '#8EE5EE'
+                            }
+                        },
+                        min: 0, // Ensure this is correctly set for the yAxis of the Ice data
+                        labels: {
+                            format: '{value}',
+                            style: {
+                                color: '#8EE5EE'
+                            }
+                        },
+                        endOnTick: false,
+                        opposite: true
+                    }],
+                    series: [
+                        {
+                            name: 'Rain',
+                            type: 'spline',
+                            color: 'yellow',
+                            data: quantitativePrecipitation,
+
+                        },
+                        {
+                            name: 'Snow',
+                            type: 'spline',
+                            color: 'white',
+                            lineWidth: 1,
+                            yAxis: 1,
+                            data: snowfallAmount,
+
+                            zIndex: 1
+                        }, {
+                            name: 'Ice',
+                            type: 'spline',
+                            color: '#8EE5EE',
+                            data: iceAccumulation,
+                            yAxis: 0,
+                        }
+                    ]
+                });
 
 
             } catch (error) {
@@ -987,7 +1131,8 @@
         var divs = [
             document.getElementById('hourlyDiv'),
             document.getElementById('forecastDiv'),
-            document.getElementById('uavDiv')
+            document.getElementById('uavDiv'),
+            document.getElementById('precipDiv')
         ];
         var currentDivIndex = 0;
 
@@ -1031,6 +1176,8 @@
         var newSvgPath = "tropicalon.svg";
         document.getElementById("svg-tropical").src = newSvgPath;
     }
+
+
 
 </script>
 
