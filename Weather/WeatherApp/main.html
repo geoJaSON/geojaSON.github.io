@@ -147,6 +147,11 @@
             bottom: 10px;
             right: 10px;
         }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
     </style>
 </head>
 
@@ -162,7 +167,14 @@
             <div class="container padding-10 col-md-4">
                 <div class="jumbotron h-100">
                     <div class="h-100">
-                        <div class="container-fluid">
+                        <div id="initialtext" class="text-center">
+                        Select a location on the map</div>
+                        <div id="loadingIndicator" class="text-center d-none">
+                            <div class="spinner-border text-custom" role="status">
+                                <span class="sr-only"></span>
+                            </div>
+                        </div>
+                        <div id = 'hiddendiv' class="container-fluid d-none">
                             <div class="row">
                                 <div id="detailDiv" class="col-md-12">
                                 </div>
@@ -171,7 +183,43 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <div id="currentDiv" class="col-md-12">
-                                        Current Conditions
+
+                                        <div class="weather-stats">
+                                            <table style="width: 100%;">
+                                                <tbody>
+                                                    <tr>
+                                                        <td style="width: 10%;"><img src="temp-icon.svg"
+                                                                alt="Temperature" style="width: 50px; height: auto;" />
+                                                        </td>
+                                                        <td id="temperature" style="text-align: center;"></td>
+                                                        <td style="width: 10%;"><img src="wind-icon.svg"
+                                                                alt="Wind Speed" style="width: 50px; height: auto;" />
+                                                        </td>
+                                                        <td id="wind" style="text-align: center;"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="width: 10%;"><img src="gust-icon.svg" alt="Wind Gust"
+                                                                style="width: 50px; height: auto;" /></td>
+                                                        <td id="gust" style="text-align: center;"></td>
+                                                        <td style="width: 10%;"><img src="fire-icon.svg"
+                                                                alt="Fire Condition"
+                                                                style="width: 50px; height: auto;" /></td>
+                                                        <td id="fire" style="text-align: center;"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="width: 10%;"><img src="cloud-icon.svg"
+                                                                alt="Cloud Cover" style="width: 50px; height: auto;" />
+                                                        </td>
+                                                        <td id="cloud" style="text-align: center;"></td>
+                                                        <td style="width: 10%;"><img src="rain-icon.svg"
+                                                                alt="Precipitation"
+                                                                style="width: 50px; height: auto;" /></td>
+                                                        <td id="rain" style="text-align: center;"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -274,13 +322,15 @@
             url: "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity/MapServer"
 
         });
-var mapLayer = new MapImageLayer({
+        var mapLayer = new MapImageLayer({
             url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/natl_fcst_wx_chart/MapServer"
-   
+
         });
         map.add(mapLayer);
         map.add(radarLayer);
         view.on("click", async function (event) {
+            document.getElementById('initialtext').innerHTML = '';
+            document.getElementById('loadingIndicator').classList.remove('d-none');
 
             const point = {
                 type: "point",
@@ -406,6 +456,55 @@ var mapLayer = new MapImageLayer({
                     return [date.getTime(), item.value];
                 });
 
+                //Get temperature that is closest to now
+                let now = Date.now();
+                let closesttemp = temperature.reduce(function (prev, curr) {
+                    return (Math.abs(curr[0] - now) < Math.abs(prev[0] - now) ? curr : prev);
+                });
+
+                let closestcloud = skyCover.reduce(function (prev, curr) {
+                    return (Math.abs(curr[0] - now) < Math.abs(prev[0] - now) ? curr : prev);
+                });
+                let closestrain = probabilityOfPrecipitation.reduce(function (prev, curr) {
+                    return (Math.abs(curr[0] - now) < Math.abs(prev[0] - now) ? curr : prev);
+                });
+                let closestfire
+                try {
+                    closestfire = grasslandFireDangerIndex.reduce(function (prev, curr) {
+                        return (Math.abs(curr[0] - now) < Math.abs(prev[0] - now) ? curr : prev);
+                    });
+
+                    // Additional code to work with closestfire
+                } catch (error) {
+                    // Handle the error
+                    closestfire = [0,0]    // Here, you can define how your program should behave in case of an error.
+                    // For example, setting closestfire to a default value, or logging the error, etc.
+                }
+
+                let closestwind = windSpeed.reduce(function (prev, curr) {
+                    return (Math.abs(curr[0] - now) < Math.abs(prev[0] - now) ? curr : prev);
+                });
+
+                let closestgust = windGust.reduce(function (prev, curr) {
+                    return (Math.abs(curr[0] - now) < Math.abs(prev[0] - now) ? curr : prev);
+                });
+                // Update the content of the div element
+                document.getElementById('loadingIndicator').classList.add('d-none');
+
+                document.getElementById('hiddendiv').classList.remove('d-none');
+
+                document.getElementById('temperature').innerText = closesttemp[1] + ' °F';
+                document.getElementById('wind').innerText = Math.round(closestwind[1],0) + ' mph';
+                document.getElementById('gust').innerText = Math.round(closestgust[1],0) + ' mph';
+                document.getElementById('fire').innerText = closestfire[1] + ' FDI';
+                document.getElementById('cloud').innerText = closestcloud[1] + '%';
+                document.getElementById('rain').innerText = closestrain[1] + '%';
+
+
+
+
+
+
                 if (snowfallAmount.some(item => item[1] > 0)) {
                     switchSnowSVG();
                 }
@@ -451,6 +550,11 @@ var mapLayer = new MapImageLayer({
                 });
 
                 Highcharts.chart('hourlyDiv', {
+                    legend: {
+    itemStyle: {
+      color: 'white' // Change this to the desired color
+    }
+  },
                     chart: {
                         type: 'line',
                         zoomType: 'xy',
@@ -464,6 +568,19 @@ var mapLayer = new MapImageLayer({
                     },
                     xAxis: {
                         type: 'datetime',
+                        plotLines: [{
+                            value: Date.now(),
+                            color: 'white',
+                            width: 2,
+                            zIndex: 5,
+                            label: {
+                                text: 'Now',
+                                align: 'center',
+                                style: {
+                                    color: 'white'
+                                }
+                            }
+                        }],
                         title: {
                             text: null
                         },
@@ -505,13 +622,13 @@ var mapLayer = new MapImageLayer({
                         title: {
                             text: 'Probability of Precipitation',
                             style: {
-                                color: 'rgba(0, 77, 168)'
+                                color: 'white'
                             }
                         },
                         labels: {
                             format: '{value} %',
                             style: {
-                                color: 'rgba(0, 77, 168)'
+                                color: 'white'
                             }
                         },
                         max: 100,
@@ -550,7 +667,7 @@ var mapLayer = new MapImageLayer({
                         }, {
                             name: 'Probability of Precipitation',
                             type: 'column',
-                            color: 'rgba(0, 77, 168, 0.5)',
+                            color: 'rgba(255, 255, 255, 0.5)',
                             data: probabilityOfPrecipitation,
                             yAxis: 2,
                             tooltip: {
@@ -595,6 +712,11 @@ var mapLayer = new MapImageLayer({
                 }
 
                 Highcharts.chart('uavDiv', {
+                    legend: {
+    itemStyle: {
+      color: 'white' // Change this to the desired color
+    }
+  },
                     chart: {
                         type: 'line',
                         zoomType: 'xy',
@@ -620,7 +742,7 @@ var mapLayer = new MapImageLayer({
                     },
                     yAxis: [{
                         title: {
-                            text: 'Ceiling Height (ft)',
+                            text: 'Visibility (miles)',
                             style: {
                                 color: 'red'
                             }
@@ -632,7 +754,7 @@ var mapLayer = new MapImageLayer({
                         }
                     }, { // Secondary yAxis for Wind Speed
                         title: {
-                            text: 'Wind Speed',
+                            text: 'Wind Gust',
                             style: {
                                 color: 'green'
                             }
@@ -648,15 +770,15 @@ var mapLayer = new MapImageLayer({
                         max: 80,
                     }, { // Tertiary yAxis for Probability of Precipitation
                         title: {
-                            text: 'Visibility (miles)',
+                            text: 'Ceiling Height (ft)',
                             style: {
-                                color: 'rgba(0, 77, 168)'
+                                color: 'white'
                             }
                         },
                         labels: {
                             format: '{value} miles',
                             style: {
-                                color: 'rgba(0, 77, 168)'
+                                color: 'white'
                             }
                         },
                         max: 100,
