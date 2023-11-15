@@ -19,6 +19,7 @@
         html,
         body {
             background-image: url('wxbackground.png');
+            background-size: cover;
             height: 100%;
             /* Make sure the body takes full viewport height */
         }
@@ -152,6 +153,25 @@
             width: 3rem;
             height: 3rem;
         }
+
+
+
+        .card-body .background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  opacity: 0.5; /* Adjust the opacity as needed */
+  z-index: -1;
+}
+
+.card-body {
+  position: relative;
+  z-index: 1;
+}
+
     </style>
 </head>
 
@@ -168,13 +188,13 @@
                 <div class="jumbotron h-100">
                     <div class="h-100">
                         <div id="initialtext" class="text-center">
-                        Select a location on the map</div>
+                            Select a location on the map</div>
                         <div id="loadingIndicator" class="text-center d-none">
                             <div class="spinner-border text-custom" role="status">
                                 <span class="sr-only"></span>
                             </div>
                         </div>
-                        <div id = 'hiddendiv' class="container-fluid d-none">
+                        <div id='hiddendiv' class="container-fluid d-none">
                             <div class="row">
                                 <div id="detailDiv" class="col-md-12">
                                 </div>
@@ -277,12 +297,13 @@
                         <button id="upArrow" class="arrow">&#8593;</button> <!-- Up arrow -->
                         <button id="downArrow" class="arrow">&#8595;</button> <!-- Down arrow -->
                     </div>
-                    <!-- <div id="forecastDiv" class="h-100 d-none">
-                        <!-- Forecast content here -->
-                    <!-- </div> -->
                     <div id="hourlyDiv" class="h-100">
                         <!-- Hourly content here -->
                     </div>
+                    <div id="forecastDiv" class="h-100 d-none">
+                        <!-- Forecast content here -->
+                    </div>
+
                     <div id="uavDiv" class="h-100 d-none">
                         <!-- Hourly content here -->
                     </div>
@@ -374,7 +395,7 @@
                 detcontainer.innerHTML = `<h2>${regionData.address.City}</h2><h4>${regionData.address.Region}</h4>`
 
                 // Now that both are complete, fetch the forecast data
-                //const dailyForecastData = await getForecast(forecastUrl);
+                const dailyForecastData = await getForecast(forecastUrl);
                 //console.log('Daily Fetched')
                 const hourlyForecastData = await getForecast(forecastHourlyUrl);
                 console.log('Hourly Fetched')
@@ -382,22 +403,28 @@
                 const container = document.getElementById('forecastDiv');
 
 
-                //                 dailyForecastData['periods'].forEach(forecast => {
-                //                     const forecastDiv = document.createElement('div');
-                //                     forecastDiv.classList.add('forecast-item');
+                dailyForecastData['periods'].forEach(forecast => {
+                    const forecastDiv = document.createElement('div');
 
-                //                     // Add HTML content - customize as per your need
-                //                     forecastDiv.innerHTML = `
-                //     <h5>${forecast.name}</h5>
-                //     <img src="${forecast.icon}" alt="Weather Icon" width="30%" height="30%">
-                //     <p>${forecast.shortForecast}</p>
-                //     <p>${forecast.temperature} °${forecast.temperatureUnit}</p>
-                //     <p>Wind: ${forecast.windSpeed} ${forecast.windDirection}</p>
-                //   `;
+                    // Add HTML content
+                    forecastDiv.innerHTML = `
+<div class="card text-white bg-dark mb-3" style="max-width: 18rem;">
+  <div class="card-header">${forecast.name}</div>
+  <div class="card-body">
+    <div class="background-image" style="background-image: url(${forecast.icon}); background-size: cover"></div>
+    <h5 class="card-title">${forecast.shortForecast}</h5>
+    <p class="card-text">${forecast.temperature} °${forecast.temperatureUnit}<br>
+    Wind: ${forecast.windSpeed} ${forecast.windDirection}
+  </div>
+</div>
+`;
+                    // Append only day items
+                    if (forecast.isDaytime) {
+                        container.appendChild(forecastDiv);
+                    }
+                });
 
-                //                     container.appendChild(forecastDiv);
 
-                //        });
                 let temperature = hourlyForecastData['temperature']['values'].map(item => {
                     let date = new Date(item.validTime.split("/")[0]); // Parsing the date
                     return [date.getTime(), item.value * (9 / 5) + 32];
@@ -437,7 +464,7 @@
                 });
                 let ceilingHeight = hourlyForecastData['ceilingHeight']['values'].map(item => {
                     let date = new Date(item.validTime.split("/")[0]); // Parsing the date
-                    return [date.getTime(), item.value];
+                    return [date.getTime(), Math.abs(item.value) * 3.28084];
                 });
                 let visibility = hourlyForecastData['visibility']['values'].map(item => {
                     let date = new Date(item.validTime.split("/")[0]); // Parsing the date
@@ -477,7 +504,7 @@
                     // Additional code to work with closestfire
                 } catch (error) {
                     // Handle the error
-                    closestfire = [0,0]    // Here, you can define how your program should behave in case of an error.
+                    closestfire = [0, 0]    // Here, you can define how your program should behave in case of an error.
                     // For example, setting closestfire to a default value, or logging the error, etc.
                 }
 
@@ -494,8 +521,8 @@
                 document.getElementById('hiddendiv').classList.remove('d-none');
 
                 document.getElementById('temperature').innerText = closesttemp[1] + ' °F';
-                document.getElementById('wind').innerText = Math.round(closestwind[1],0) + ' mph';
-                document.getElementById('gust').innerText = Math.round(closestgust[1],0) + ' mph';
+                document.getElementById('wind').innerText = Math.round(closestwind[1], 0) + ' mph';
+                document.getElementById('gust').innerText = Math.round(closestgust[1], 0) + ' mph';
                 document.getElementById('fire').innerText = closestfire[1] + ' FDI';
                 document.getElementById('cloud').innerText = closestcloud[1] + '%';
                 document.getElementById('rain').innerText = closestrain[1] + '%';
@@ -532,6 +559,8 @@
                         // Check if the element exists in targetData
                         if (!targetData[i]) {
                             // If it doesn't exist, create it with the timestamp from referenceData and the defaultValue
+
+
                             targetData[i] = [referenceData[i][0], defaultValue];
                         } else if (targetData[i][1] == null) {
                             // If the element exists but the value is null, set the default value
@@ -542,19 +571,24 @@
 
 
                 backfillData(temperature, visibility, defaultVisibility);
+                console.log(ceilingHeight)
                 backfillData(temperature, ceilingHeight, defaultCloudCeiling);
+                console.log(ceilingHeight)
 
                 //sort visibility by timestamp
                 visibility.sort(function (a, b) {
                     return a[0] - b[0];
                 });
+                ceilingHeight.sort(function (a, b) {
+                    return a[0] - b[0];
+                });
 
                 Highcharts.chart('hourlyDiv', {
                     legend: {
-    itemStyle: {
-      color: 'white' // Change this to the desired color
-    }
-  },
+                        itemStyle: {
+                            color: 'white' // Change this to the desired color
+                        }
+                    },
                     chart: {
                         type: 'line',
                         zoomType: 'xy',
@@ -713,10 +747,10 @@
 
                 Highcharts.chart('uavDiv', {
                     legend: {
-    itemStyle: {
-      color: 'white' // Change this to the desired color
-    }
-  },
+                        itemStyle: {
+                            color: 'white' // Change this to the desired color
+                        }
+                    },
                     chart: {
                         type: 'line',
                         zoomType: 'xy',
@@ -776,12 +810,12 @@
                             }
                         },
                         labels: {
-                            format: '{value} miles',
+                            format: '{value}',
                             style: {
                                 color: 'white'
                             }
                         },
-                        max: 100,
+                        max: 60000,
                         endOnTick: false,
                         opposite: true
                     }],
@@ -950,18 +984,21 @@
     document.addEventListener('DOMContentLoaded', function () {
         var upArrow = document.getElementById('upArrow');
         var downArrow = document.getElementById('downArrow');
-        var uavDiv = document.getElementById('uavDiv');
-        var hourlyDiv = document.getElementById('hourlyDiv');
+        var divs = [
+            document.getElementById('hourlyDiv'),
+            document.getElementById('forecastDiv'),
+            document.getElementById('uavDiv')
+        ];
+        var currentDivIndex = 0;
 
-        upArrow.addEventListener('click', function () {
-            uavDiv.classList.toggle('d-none');
-            hourlyDiv.classList.toggle('d-none');
-        });
+        function toggleDivs() {
+            divs[currentDivIndex].classList.add('d-none');
+            currentDivIndex = (currentDivIndex + 1) % divs.length;
+            divs[currentDivIndex].classList.remove('d-none');
+        }
 
-        downArrow.addEventListener('click', function () {
-            uavDiv.classList.toggle('d-none');
-            hourlyDiv.classList.toggle('d-none');
-        });
+        upArrow.addEventListener('click', toggleDivs);
+        downArrow.addEventListener('click', toggleDivs);
     });
 
     function switchSnowSVG() {
