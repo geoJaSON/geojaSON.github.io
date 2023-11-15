@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts-more.js"></script>
+
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.28/"></script>
+    <style>
+        html,
+        body {
+            background-image: url('wxbackground.png');
+            height: 100%;
+            /* Make sure the body takes full viewport height */
+        }
+
+        .h-100 {
+            height: 100%;
+            /* Sets the height to fill the container */
+        }
+
+        .h-66 {
+            height: 66.66%;
+            /* Approximately 2/3rds height */
+        }
+
+        .h-33 {
+            height: 33.33%;
+            /* Approximately 1/3rd height */
+        }
+
+        .jumbotron {
+            /* backdrop-filter: blur(5px); */
+
+            background: rgba(0, 0, 0, 0.5);
+            border: 0px solid #fff;
+            color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px 0px rgba(0, 0, 0, 0.1);
+        }
+
+        .jumbotron2 {
+            display: flex;
+            /* Use flexbox */
+            flex-direction: row;
+            /* Align children in a row */
+            align-items: center;
+            /* Center items vertically */
+            justify-content: start;
+            /* Align items to the start of the container */
+            background: rgba(0, 0, 0, 0.701);
+            border: 0px solid #fff;
+            color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px 0px rgba(0, 0, 0, 0.1);
+        }
+
+        .jumbotron h2 {
+            font-weight: 700;
+        }
+
+        .jumbotron p {
+            color: #ffffff;
+        }
+
+        .padding-10 {
+            padding: 5px;
+            margin: 0px
+                /* Adjust as needed */
+        }
+
+        #forecastDiv {
+            bottom: 0;
+            /* semi-transparent black */
+            color: white;
+            display: flex;
+            justify-content: center;
+            height: 100%;
+            /* or set a specific height */
+            max-height: 100%;
+            /* Optional: to ensure it doesn't grow beyond the parent container */
+            overflow-y: auto;
+            /* Adds a vertical scrollbar if the content overflows */
+        }
+
+        #hourlyDiv {
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            height: 100%;
+            margin: 0;
+            overflow: auto;
+            width: 100%;
+        }
+
+        #uavDiv {
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .forecast-item {
+            margin: 0 10px;
+            text-align: center;
+        }
+
+        .arrow-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 25px;
+            /* Adjust width as needed */
+        }
+
+        .arrow {
+            background-color: transparent;
+            border: none;
+            color: #ffffffae;
+            font-size: 36px;
+            cursor: pointer;
+            margin: 5px 0;
+            /* Reduce margin if necessary */
+        }
+
+        #upArrow {
+            top: 10px;
+            right: 10px;
+        }
+
+        #downArrow {
+            bottom: 10px;
+            right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid h-100">
+        <div class="row h-66">
+            <div class="container padding-10 col-md-8">
+                <div class="jumbotron h-100">
+                    <div id="viewDiv" class="h-100">
+                    </div>
+                </div>
+            </div>
+            <div class="container padding-10 col-md-4">
+                <div class="jumbotron h-100">
+                    <div class="h-100">
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div id="detailDiv" class="col-md-12">
+                                </div>
+                                <hr>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div id="currentDiv" class="col-md-12">
+                                        Current Conditions
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div id="svg-fire-div">
+                                        <!-- Initial SVG (embedded or via an img tag) -->
+                                        <img src="fireoff.svg" id="svg-fire">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div id="svg-heat-div">
+                                        <!-- Initial SVG (embedded or via an img tag) -->
+                                        <img src="heatoff.svg" id="svg-heat">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div id="svg-tropical-div">
+                                        <!-- Initial SVG (embedded or via an img tag) -->
+                                        <img src="tropicaloff.svg" id="svg-tropical">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div id="svg-rain-div">
+                                        <!-- Initial SVG (embedded or via an img tag) -->
+                                        <img src="rainoff.svg" id="svg-rain">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div id="svg-storm-div">
+                                        <!-- Initial SVG (embedded or via an img tag) -->
+                                        <img src="stormoff.svg" id="svg-storm">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div id="svg-snow-div">
+                                        <!-- Initial SVG (embedded or via an img tag) -->
+                                        <img src="snowoff.svg" id="svg-snow">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row h-33">
+            <div class="container padding-10 col-md-12">
+                <div class="jumbotron2 h-100">
+                    <div class="arrow-container">
+                        <button id="upArrow" class="arrow">&#8593;</button> <!-- Up arrow -->
+                        <button id="downArrow" class="arrow">&#8595;</button> <!-- Down arrow -->
+                    </div>
+                    <!-- <div id="forecastDiv" class="h-100 d-none">
+                        <!-- Forecast content here -->
+                    <!-- </div> -->
+                    <div id="hourlyDiv" class="h-100">
+                        <!-- Hourly content here -->
+                    </div>
+                    <div id="uavDiv" class="h-100 d-none">
+                        <!-- Hourly content here -->
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+    </div>
+</body>
+<script>
+    let previousPointGraphic
+    require([
+        "esri/config",
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/Graphic",
+        "esri/geometry/Point",
+        "esri/layers/MapImageLayer"
+    ], function (esriConfig, Map, MapView, Graphic, Point, MapImageLayer) {
+        esriConfig.portalUrl = "https://arcportal-ucop-corps.usace.army.mil/s0portal";
+        esriConfig.request.trustedServers.push("https://arcportal-ucop-corps.usace.army.mil/s0portal");
+        var map = new Map({
+            basemap: "streets-night-vector" // You can change the basemap here
+        });
+
+        var view = new MapView({
+            container: "viewDiv", // Reference to the view div created in HTML
+            map: map,
+            zoom: 4, // Sets zoom level based on scale
+            center: [-98, 39] // Sets center point of view using longitude,latitude
+        });
+        //Add radar layer to map
+        var radarLayer = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity/MapServer"
+
+        });
+var mapLayer = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/natl_fcst_wx_chart/MapServer"
+   
+        });
+        map.add(mapLayer);
+        map.add(radarLayer);
+        view.on("click", async function (event) {
+
+            const point = {
+                type: "point",
+                longitude: event.mapPoint.longitude,
+                latitude: event.mapPoint.latitude
+            };
+
+            const markerSymbol = {
+                type: "simple-marker",
+                color: [226, 119, 40],
+                outline: {
+                    color: [255, 255, 255],
+                    width: 2
+                }
+            };
+
+            const pointGraphic = new Graphic({
+                geometry: point,
+                symbol: markerSymbol
+            });
+
+            if (previousPointGraphic) {
+                view.graphics.remove(previousPointGraphic);
+            }
+
+            view.graphics.add(pointGraphic);
+            previousPointGraphic = pointGraphic;
+
+            var lat = event.mapPoint.latitude;
+            var lon = event.mapPoint.longitude;
+
+            try {
+                // Run both getRegion and getGridpoint simultaneously
+                const [regionData, gridpointData] = await Promise.all([
+                    getRegion(lat, lon),
+                    getGridpoint(lat, lon)
+                ]);
+                const { forecastUrl, forecastHourlyUrl } = gridpointData;
+                const detcontainer = document.getElementById('detailDiv');
+
+                detcontainer.innerHTML = `<h2>${regionData.address.City}</h2><h4>${regionData.address.Region}</h4>`
+
+                // Now that both are complete, fetch the forecast data
+                //const dailyForecastData = await getForecast(forecastUrl);
+                //console.log('Daily Fetched')
+                const hourlyForecastData = await getForecast(forecastHourlyUrl);
+                console.log('Hourly Fetched')
+
+                const container = document.getElementById('forecastDiv');
+
+
+                //                 dailyForecastData['periods'].forEach(forecast => {
+                //                     const forecastDiv = document.createElement('div');
+                //                     forecastDiv.classList.add('forecast-item');
+
+                //                     // Add HTML content - customize as per your need
+                //                     forecastDiv.innerHTML = `
+                //     <h5>${forecast.name}</h5>
+                //     <img src="${forecast.icon}" alt="Weather Icon" width="30%" height="30%">
+                //     <p>${forecast.shortForecast}</p>
+                //     <p>${forecast.temperature} °${forecast.temperatureUnit}</p>
+                //     <p>Wind: ${forecast.windSpeed} ${forecast.windDirection}</p>
+                //   `;
+
+                //                     container.appendChild(forecastDiv);
+
+                //        });
+                let temperature = hourlyForecastData['temperature']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value * (9 / 5) + 32];
+                });
+                let maxtemperature = hourlyForecastData['maxTemperature']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value];
+                });
+                let skyCover = hourlyForecastData['skyCover']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value];
+                });
+                let windSpeed = hourlyForecastData['windSpeed']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value];
+                });
+                let windGust = hourlyForecastData['windGust']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value];
+                });
+
+                let probabilityOfPrecipitation = hourlyForecastData['probabilityOfPrecipitation']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value];
+                });
+                let quantitativePrecipitation = hourlyForecastData['quantitativePrecipitation']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value];
+                });
+                let iceAccumulation = hourlyForecastData['iceAccumulation']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value];
+                });
+                let snowfallAmount = hourlyForecastData['snowfallAmount']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value];
+                });
+                let ceilingHeight = hourlyForecastData['ceilingHeight']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value];
+                });
+                let visibility = hourlyForecastData['visibility']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value * 0.000621371];
+                });
+                let grasslandFireDangerIndex = hourlyForecastData['grasslandFireDangerIndex']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value];
+                });
+                let lightningActivityLevel = hourlyForecastData['lightningActivityLevel']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value];
+                });
+                let apparentTemperature = hourlyForecastData['apparentTemperature']['values'].map(item => {
+                    let date = new Date(item.validTime.split("/")[0]); // Parsing the date
+                    return [date.getTime(), item.value];
+                });
+
+                if (snowfallAmount.some(item => item[1] > 0)) {
+                    switchSnowSVG();
+                }
+                if (iceAccumulation.some(item => item[1] > 0)) {
+                    switchSnowSVG();
+                }
+                if (quantitativePrecipitation.some(item => item[1] > 0)) {
+                    switchRainSVG();
+                }
+                if (probabilityOfPrecipitation.some(item => item[1] > 0)) {
+                    switchRainSVG();
+                }
+                if (lightningActivityLevel.some(item => item[1] > 0)) {
+                    switchStormSVG();
+                }
+                if (grasslandFireDangerIndex.some(item => item[1] > 5)) {
+                    switchStormSVG();
+                }
+
+                let defaultVisibility = 15; // Default value for visibility
+                let defaultCloudCeiling = 65620; // Default value for cloud ceiling
+
+                function backfillData(referenceData, targetData, defaultValue) {
+                    for (let i = 0; i < referenceData.length; i++) {
+                        // Check if the element exists in targetData
+                        if (!targetData[i]) {
+                            // If it doesn't exist, create it with the timestamp from referenceData and the defaultValue
+                            targetData[i] = [referenceData[i][0], defaultValue];
+                        } else if (targetData[i][1] == null) {
+                            // If the element exists but the value is null, set the default value
+                            targetData[i][1] = defaultValue;
+                        }
+                    }
+                }
+
+
+                backfillData(temperature, visibility, defaultVisibility);
+                backfillData(temperature, ceilingHeight, defaultCloudCeiling);
+
+                //sort visibility by timestamp
+                visibility.sort(function (a, b) {
+                    return a[0] - b[0];
+                });
+
+                Highcharts.chart('hourlyDiv', {
+                    chart: {
+                        type: 'line',
+                        zoomType: 'xy',
+                        backgroundColor: '#f9f8f800',
+                        width: null,
+                        height: null
+
+                    },
+                    title: {
+                        text: null
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        title: {
+                            text: null
+                        },
+                        labels: {
+                            style: {
+                                color: '#FFFFFF' // white y-axis labels
+                            }
+                        }
+                    },
+                    yAxis: [{
+                        title: {
+                            text: 'Temperature (°F)',
+                            style: {
+                                color: 'red'
+                            }
+                        },
+                        labels: {
+                            style: {
+                                color: 'red' // white y-axis labels
+                            }
+                        }
+                    }, { // Secondary yAxis for Wind Speed
+                        title: {
+                            text: 'Wind Speed',
+                            style: {
+                                color: 'green'
+                            }
+                        },
+                        labels: {
+                            format: '{value} mph',
+                            style: {
+                                color: 'green'
+                            },
+
+                        },
+                        opposite: true,
+                        max: 80,
+                    }, { // Tertiary yAxis for Probability of Precipitation
+                        title: {
+                            text: 'Probability of Precipitation',
+                            style: {
+                                color: 'rgba(0, 77, 168)'
+                            }
+                        },
+                        labels: {
+                            format: '{value} %',
+                            style: {
+                                color: 'rgba(0, 77, 168)'
+                            }
+                        },
+                        max: 100,
+                        endOnTick: false,
+                        opposite: true
+                    }],
+                    series: [
+                        {
+                            name: 'Temperature',
+                            data: temperature,
+                            color: {
+                                linearGradient: {
+                                    x1: 0,
+                                    x2: 0,
+                                    y1: 0,
+                                    y2: 1
+                                },
+                                stops: [
+                                    [0, 'red'], // start with red at the top
+                                    [1, '#BDBEFD'] // end with blue at the bottom
+                                ]
+                            },
+                        },
+                        {
+                            name: 'Wind Speed',
+                            type: 'spline',
+                            color: 'green',
+                            lineWidth: 2,
+                            yAxis: 1,
+                            dashStyle: 'dash',
+                            data: windSpeed,
+                            tooltip: {
+                                valueSuffix: ' mph'
+                            },
+                            zIndex: 1
+                        }, {
+                            name: 'Probability of Precipitation',
+                            type: 'column',
+                            color: 'rgba(0, 77, 168, 0.5)',
+                            data: probabilityOfPrecipitation,
+                            yAxis: 2,
+                            tooltip: {
+                                valueSuffix: ' %'
+                            },
+                            zIndex: 0
+                        }
+                    ]
+                });
+
+
+
+                // Function to find value by timestamp in a dataset
+                function findValueByTimestamp(timestamp, dataset) {
+                    let entry = dataset.find(pair => pair[0] === timestamp);
+                    return entry ? entry[1] : null;
+                }
+
+                // Create plotBands array
+                let plotBands = [];
+                for (let i = 0; i < visibility.length; i++) {
+                    let timestamp = visibility[i][0];
+                    let vis = visibility[i][1];
+                    let wind = findValueByTimestamp(timestamp, windGust);
+                    let cloudCeiling = findValueByTimestamp(timestamp, ceilingHeight);
+
+                    // Check if all conditions are met
+                    if (wind < 21 && (vis > 5 || vis == null) && (cloudCeiling > 1000 || cloudCeiling == null)) {
+                        plotBands.push({
+                            from: timestamp,
+                            to: timestamp + 3600000, // Assuming 1 hour intervals, adjust as needed
+                            color: 'green'
+                        });
+                    }
+                    else {
+                        plotBands.push({
+                            from: timestamp,
+                            to: timestamp + 3600000, // Assuming 1 hour intervals, adjust as needed
+                            color: 'red'
+                        });
+                    }
+                }
+
+                Highcharts.chart('uavDiv', {
+                    chart: {
+                        type: 'line',
+                        zoomType: 'xy',
+                        backgroundColor: '#f9f8f800',
+                        width: null,
+                        height: null
+
+                    },
+                    title: {
+                        text: null
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        title: {
+                            text: null
+                        },
+                        labels: {
+                            style: {
+                                color: '#FFFFFF' // white y-axis labels
+                            }
+                        },
+                        plotBands: plotBands
+                    },
+                    yAxis: [{
+                        title: {
+                            text: 'Ceiling Height (ft)',
+                            style: {
+                                color: 'red'
+                            }
+                        },
+                        labels: {
+                            style: {
+                                color: 'red' // white y-axis labels
+                            }
+                        }
+                    }, { // Secondary yAxis for Wind Speed
+                        title: {
+                            text: 'Wind Speed',
+                            style: {
+                                color: 'green'
+                            }
+                        },
+                        labels: {
+                            format: '{value} mph',
+                            style: {
+                                color: 'green'
+                            },
+
+                        },
+                        opposite: true,
+                        max: 80,
+                    }, { // Tertiary yAxis for Probability of Precipitation
+                        title: {
+                            text: 'Visibility (miles)',
+                            style: {
+                                color: 'rgba(0, 77, 168)'
+                            }
+                        },
+                        labels: {
+                            format: '{value} miles',
+                            style: {
+                                color: 'rgba(0, 77, 168)'
+                            }
+                        },
+                        max: 100,
+                        endOnTick: false,
+                        opposite: true
+                    }],
+                    series: [
+                        {
+                            name: 'Visibility',
+                            data: visibility,
+
+                        },
+                        {
+                            name: 'Wind Gust',
+                            type: 'spline',
+                            color: 'green',
+                            lineWidth: 2,
+                            yAxis: 1,
+                            dashStyle: 'dash',
+                            data: windGust,
+                            tooltip: {
+                                valueSuffix: ' mph'
+                            },
+                            zIndex: 1
+                        }, {
+                            name: 'Ceiling',
+                            type: 'line',
+                            color: 'rgba(0, 77, 168, 0.5)',
+                            data: ceilingHeight,
+                            yAxis: 2,
+                            tooltip: {
+                                valueSuffix: ' ft'
+                            },
+                            zIndex: 0
+                        }
+                    ]
+                });
+
+
+
+            } catch (error) {
+                console.error('Error fetching forecast:', error);
+            }
+        });
+
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    async function getRegion(lat, lon) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            const url = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?location=${lon},${lat}&forStorage=false&f=pjson`;
+            xhr.open("GET", url, true);
+
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve(JSON.parse(xhr.responseText));
+                } else {
+                    reject(new Error(`HTTP error! Status: ${xhr.status}`));
+                }
+            };
+
+            xhr.onerror = function () {
+                reject(new Error("Network error"));
+            };
+
+            xhr.send();
+        });
+    }
+
+    async function getGridpoint(lat, lon) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            const url = `https://api.weather.gov/points/${lat},${lon}`;
+            xhr.open("GET", url, true);
+
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const data = JSON.parse(xhr.responseText);
+                    resolve({
+                        forecastUrl: data.properties.forecast,
+                        forecastHourlyUrl: data.properties.forecastGridData
+                    });
+                } else {
+                    reject(new Error('Network response was not ok'));
+                }
+            };
+
+            xhr.onerror = function () {
+                reject(new Error("Network error"));
+            };
+
+            xhr.send();
+        });
+    }
+
+    async function getForecast(forecastUrl, attempts = 0) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("GET", forecastUrl, true);
+
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    var data = JSON.parse(xhr.responseText);
+                    resolve(data['properties']);
+                } else {
+                    if (attempts < 5) {
+                        // Retry the function
+                        resolve(getForecast(forecastUrl, attempts + 1));
+                    } else {
+                        // Reject after 5 attempts
+                        reject(new Error('Network response was not ok'));
+                    }
+                }
+            };
+
+            xhr.onerror = function () {
+                if (attempts < 5) {
+                    // Retry the function
+                    resolve(getForecast(forecastUrl, attempts + 1));
+                } else {
+                    // Reject after 5 attempts
+                    reject(new Error("Network error"));
+                }
+            };
+
+            xhr.send();
+        });
+    }
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var upArrow = document.getElementById('upArrow');
+        var downArrow = document.getElementById('downArrow');
+        var uavDiv = document.getElementById('uavDiv');
+        var hourlyDiv = document.getElementById('hourlyDiv');
+
+        upArrow.addEventListener('click', function () {
+            uavDiv.classList.toggle('d-none');
+            hourlyDiv.classList.toggle('d-none');
+        });
+
+        downArrow.addEventListener('click', function () {
+            uavDiv.classList.toggle('d-none');
+            hourlyDiv.classList.toggle('d-none');
+        });
+    });
+
+    function switchSnowSVG() {
+        // Assuming the new SVG is also an external file
+        var newSvgPath = "snowon.svg";
+        document.getElementById("svg-snow").src = newSvgPath;
+    }
+    function switchStormSVG() {
+        // Assuming the new SVG is also an external file
+        var newSvgPath = "stormon.svg";
+        document.getElementById("svg-storm").src = newSvgPath;
+    }
+    function switchRainSVG() {
+        // Assuming the new SVG is also an external file
+        var newSvgPath = "rainon.svg";
+        document.getElementById("svg-rain").src = newSvgPath;
+    }
+    function switchFireSVG() {
+        // Assuming the new SVG is also an external file
+        var newSvgPath = "fireon.svg";
+        document.getElementById("svg-fire").src = newSvgPath;
+    }
+    function switchHeatSVG() {
+        // Assuming the new SVG is also an external file
+        var newSvgPath = "heaton.svg";
+        document.getElementById("svg-heat").src = newSvgPath;
+    }
+    function switchTropicalSVG() {
+        // Assuming the new SVG is also an external file
+        var newSvgPath = "tropicalon.svg";
+        document.getElementById("svg-tropical").src = newSvgPath;
+    }
+
+</script>
+
+</html>
