@@ -216,6 +216,7 @@
 
                                         <div class="weather-stats">
                                             <table style="width: 100%;">
+                                                Current Conditions
                                                 <tbody>
                                                     <tr>
                                                         <td style="width: 10%;"><img src="temp-icon.svg"
@@ -254,6 +255,7 @@
                                 </div>
                             </div>
                             <hr>
+                            Expected Conditions
                             <div class="row">
                                 <div class="col-md-4">
                                     <div id="svg-fire-div">
@@ -366,6 +368,14 @@
             document.getElementById('initialtext').innerHTML = '';
             document.getElementById('loadingIndicator').classList.remove('d-none');
 
+            document.getElementById("svg-snow").src = "snowoff.svg";
+            document.getElementById("svg-storm").src = "stormoff.svg";
+            document.getElementById("svg-rain").src = "rainoff.svg";
+            document.getElementById("svg-fire").src = "fireoff.svg";
+            document.getElementById("svg-heat").src = "heatoff.svg";
+            document.getElementById("svg-tropical").src = "tropicaloff.svg";
+        
+
             const point = {
                 type: "point",
                 longitude: event.mapPoint.longitude,
@@ -405,7 +415,7 @@
                 const { forecastUrl, forecastHourlyUrl } = gridpointData;
                 const detcontainer = document.getElementById('detailDiv');
 
-                detcontainer.innerHTML = `<h2>${regionData.address.City}</h2><h4>${regionData.address.Region}</h4>`
+                detcontainer.innerHTML = `<h4>${regionData.address.City}, ${regionData.address.Region}</h4>`
 
                 // Now that both are complete, fetch the forecast data
                 const dailyForecastData = await getForecast(forecastUrl);
@@ -557,11 +567,11 @@
                 if (probabilityOfPrecipitation.some(item => item[1] > 0)) {
                     switchRainSVG();
                 }
-                if (lightningActivityLevel.some(item => item[1] > 0)) {
+                if (lightningActivityLevel.some(item => item[1] > 1)) {
                     switchStormSVG();
                 }
-                if (grasslandFireDangerIndex.some(item => item[1] > 5)) {
-                    switchStormSVG();
+                if (grasslandFireDangerIndex.some(item => item[1] > 40)) {
+                    switchFireSVG();
                 }
 
                 let defaultVisibility = 15; // Default value for visibility
@@ -595,6 +605,10 @@
                 ceilingHeight.sort(function (a, b) {
                     return a[0] - b[0];
                 });
+
+
+
+
 
                 Highcharts.chart('hourlyDiv', {
                     legend: {
@@ -692,18 +706,20 @@
                         {
                             name: 'Temperature',
                             data: temperature,
-                            color: {
-                                linearGradient: {
-                                    x1: 0,
-                                    x2: 0,
-                                    y1: 0,
-                                    y2: 1
-                                },
-                                stops: [
-                                    [0, 'red'], // start with red at the top
-                                    [1, '#BDBEFD'] // end with blue at the bottom
-                                ]
+                            tooltip: {
+                                valueSuffix: ' °F'
                             },
+                            color: 'red',
+                            zones: [
+                                {
+                                    value: 32, // Up to 32 degrees, use white color
+                                    color: 'white'
+                                },
+                                {
+                                    color: 'red' // Above 95 degrees, use red color
+                                }
+
+                            ]
                         },
                         {
                             name: 'Wind Speed',
@@ -748,7 +764,7 @@
                     let cloudCeiling = findValueByTimestamp(timestamp, ceilingHeight);
 
                     // Check if all conditions are met
-                    if (wind < 21 && (vis > 5 || vis == null) && (cloudCeiling > 1000 || cloudCeiling == null)) {
+                    if (wind < 21 && vis > 5 && cloudCeiling > 5000) {
                         plotBands.push({
                             from: timestamp,
                             to: timestamp + 3600000, // Assuming 1 hour intervals, adjust as needed
@@ -810,7 +826,8 @@
                             style: {
                                 color: 'red' // white y-axis labels
                             }
-                        }
+                        },
+                        max: 15
                     }, { // Secondary yAxis for Wind Speed
                         title: {
                             text: 'Wind Gust',
@@ -826,21 +843,19 @@
 
                         },
                         opposite: true,
-                        max: 80,
                     }, { // Tertiary yAxis for Probability of Precipitation
                         title: {
                             text: 'Ceiling Height (ft)',
                             style: {
-                                color: 'white'
+                                color: 'rgba(0, 77, 100)'
                             }
                         },
                         labels: {
-                            format: '{value}',
+                            format: '{value/1000}k',
                             style: {
-                                color: 'white'
+                                color: 'rgba(0, 77, 100)'
                             }
                         },
-                        max: 60000,
                         endOnTick: false,
                         opposite: true
                     }],
@@ -865,7 +880,7 @@
                         }, {
                             name: 'Ceiling',
                             type: 'line',
-                            color: 'rgba(0, 77, 168, 0.5)',
+                            color: 'rgba(0, 77, 100)',
                             data: ceilingHeight,
                             yAxis: 2,
                             tooltip: {
