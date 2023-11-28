@@ -364,9 +364,19 @@
         });
         map.add(mapLayer);
         map.add(radarLayer);
+
+        // Add legend to map
+        view.when(function () {
+            view.ui.add("legendDiv", "bottom-right");
+        });
+
         view.on("click", async function (event) {
             document.getElementById('initialtext').innerHTML = '';
             document.getElementById('loadingIndicator').classList.remove('d-none');
+
+            if (!document.getElementById('hiddendiv').classList.contains('d-none')) {
+                document.getElementById('hiddendiv').classList.add('d-none');
+            }
 
             document.getElementById("svg-snow").src = "snowoff.svg";
             document.getElementById("svg-storm").src = "stormoff.svg";
@@ -551,10 +561,6 @@
                 document.getElementById('rain').innerText = closestrain[1] + '%';
 
 
-
-
-
-
                 if (snowfallAmount.some(item => item[1] > 0)) {
                     switchSnowSVG();
                 }
@@ -564,10 +570,10 @@
                 if (quantitativePrecipitation.some(item => item[1] > 0)) {
                     switchRainSVG();
                 }
-                if (probabilityOfPrecipitation.some(item => item[1] > 0)) {
+                if (probabilityOfPrecipitation.some(item => item[1] > 10)) {
                     switchRainSVG();
                 }
-                if (lightningActivityLevel.some(item => item[1] > 1)) {
+                if (lightningActivityLevel.some(item => item[1] > 4)) {
                     switchStormSVG();
                 }
                 if (grasslandFireDangerIndex.some(item => item[1] > 40)) {
@@ -577,26 +583,26 @@
                 let defaultVisibility = 15; // Default value for visibility
                 let defaultCloudCeiling = 65620; // Default value for cloud ceiling
 
-                function backfillData(referenceData, targetData, defaultValue) {
-                    for (let i = 0; i < referenceData.length; i++) {
-                        // Check if the element exists in targetData
-                        if (!targetData[i]) {
-                            // If it doesn't exist, create it with the timestamp from referenceData and the defaultValue
+                // function backfillData(referenceData, targetData, defaultValue) {
+                //     for (let i = 0; i < referenceData.length; i++) {
+                //         // Check if the element exists in targetData
+                //         if (!targetData[i]) {
+                //             // If it doesn't exist, create it with the timestamp from referenceData and the defaultValue
 
 
-                            targetData[i] = [referenceData[i][0], defaultValue];
-                        } else if (targetData[i][1] == null) {
-                            // If the element exists but the value is null, set the default value
-                            targetData[i][1] = defaultValue;
-                        }
-                    }
-                }
+                //             targetData[i] = [referenceData[i][0], defaultValue];
+                //         } else if (targetData[i][1] == null) {
+                //             // If the element exists but the value is null, set the default value
+                //             targetData[i][1] = defaultValue;
+                //         }
+                //     }
+                // }
 
 
-                backfillData(temperature, visibility, defaultVisibility);
-                console.log(ceilingHeight)
-                backfillData(temperature, ceilingHeight, defaultCloudCeiling);
-                console.log(ceilingHeight)
+                // backfillData(temperature, visibility, defaultVisibility);
+                // console.log(ceilingHeight)
+                // backfillData(temperature, ceilingHeight, defaultCloudCeiling);
+                // console.log(ceilingHeight)
 
                 //sort visibility by timestamp
                 visibility.sort(function (a, b) {
@@ -673,13 +679,13 @@
                         title: {
                             text: 'Wind Speed',
                             style: {
-                                color: 'green'
+                                color: '#AFE1AF'
                             }
                         },
                         labels: {
                             format: '{value} mph',
                             style: {
-                                color: 'green'
+                                color: '#AFE1AF'
                             },
 
                         },
@@ -713,7 +719,7 @@
                             zones: [
                                 {
                                     value: 32, // Up to 32 degrees, use white color
-                                    color: 'white'
+                                    color: '#A5F2F3'
                                 },
                                 {
                                     color: 'red' // Above 95 degrees, use red color
@@ -724,7 +730,7 @@
                         {
                             name: 'Wind Speed',
                             type: 'spline',
-                            color: 'green',
+                            color: '#AFE1AF',
                             lineWidth: 2,
                             yAxis: 1,
                             dashStyle: 'dash',
@@ -832,13 +838,13 @@
                         title: {
                             text: 'Wind Gust',
                             style: {
-                                color: 'green'
+                                color: '#AFE1AF'
                             }
                         },
                         labels: {
                             format: '{value} mph',
                             style: {
-                                color: 'green'
+                                color: '#AFE1AF'
                             },
 
                         },
@@ -847,13 +853,13 @@
                         title: {
                             text: 'Ceiling Height (ft)',
                             style: {
-                                color: 'rgba(0, 77, 100)'
+                                color: 'rgba(200, 200, 200)'
                             }
                         },
                         labels: {
                             format: '{value/1000}k',
                             style: {
-                                color: 'rgba(0, 77, 100)'
+                                color: 'rgba(200, 200, 200)'
                             }
                         },
                         endOnTick: false,
@@ -868,7 +874,7 @@
                         {
                             name: 'Wind Gust',
                             type: 'spline',
-                            color: 'green',
+                            color: '#AFE1AF',
                             lineWidth: 2,
                             yAxis: 1,
                             dashStyle: 'dash',
@@ -880,7 +886,7 @@
                         }, {
                             name: 'Ceiling',
                             type: 'line',
-                            color: 'rgba(0, 77, 100)',
+                            color: 'rgba(200, 200, 200)',
                             data: ceilingHeight,
                             yAxis: 2,
                             tooltip: {
@@ -1140,26 +1146,33 @@
     }
 
 
-    document.addEventListener('DOMContentLoaded', function () {
-        var upArrow = document.getElementById('upArrow');
-        var downArrow = document.getElementById('downArrow');
-        var divs = [
-            document.getElementById('hourlyDiv'),
-            document.getElementById('forecastDiv'),
-            document.getElementById('uavDiv'),
-            document.getElementById('precipDiv')
-        ];
-        var currentDivIndex = 0;
+document.addEventListener('DOMContentLoaded', function () {
+    var upArrow = document.getElementById('upArrow');
+    var downArrow = document.getElementById('downArrow');
+    var divs = [
+        document.getElementById('hourlyDiv'),
+        document.getElementById('forecastDiv'),
+        document.getElementById('uavDiv'),
+        document.getElementById('precipDiv')
+    ];
+    var currentDivIndex = 0;
 
-        function toggleDivs() {
-            divs[currentDivIndex].classList.add('d-none');
-            currentDivIndex = (currentDivIndex + 1) % divs.length;
-            divs[currentDivIndex].classList.remove('d-none');
-        }
+    function showNextDiv() {
+        divs[currentDivIndex].classList.add('d-none');
+        currentDivIndex = (currentDivIndex + 1) % divs.length;
+        divs[currentDivIndex].classList.remove('d-none');
+    }
 
-        upArrow.addEventListener('click', toggleDivs);
-        downArrow.addEventListener('click', toggleDivs);
-    });
+    function showPreviousDiv() {
+        divs[currentDivIndex].classList.add('d-none');
+        currentDivIndex = (currentDivIndex - 1 + divs.length) % divs.length;
+        divs[currentDivIndex].classList.remove('d-none');
+    }
+
+    upArrow.addEventListener('click', showNextDiv);
+    downArrow.addEventListener('click', showPreviousDiv);
+});
+
 
     function switchSnowSVG() {
         // Assuming the new SVG is also an external file
