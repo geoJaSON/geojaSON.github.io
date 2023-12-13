@@ -163,22 +163,29 @@
                     },
 
                     success: function (data) {
-                        if (data.features && data.features.length > 0 && data.features[0].attributes) {
-                            var attributes = data.features[0].attributes;
-                            var html = `${attributes.site_street}<br>
+    if (data.features && data.features.length > 0 && data.features[0].attributes) {
+        var attributes = data.features[0].attributes;
+        var status = attributes.project_eligibility_status;
+        var html = `${attributes.site_street}<br>
                     ${attributes.site_city}, ${attributes.site_state} ${attributes.site_zip}<br>
-                    ${attributes.site_county}<br><br>
-                    This structure is ${attributes.project_eligibility_status}!<br><br>
-                    You may submit your application to the program by clicking the link below:<br>
-                    <a href="https://survey123.arcgis.com/share/c71e41c0e8a2445a9aad882686d01c58?portalUrl=https://arcportal-ucop-partners.usace.army.mil/usaceportal">SWCLA Application</a>`;
+                    ${attributes.site_county}<br><br>`;
 
-                            $("#result").html(html);
-                            $("#result").show();
-                        } else {
-                            $("#result").html("<p><span style='color:#d35400'>This property is not identified as a part of the Southwest Coastal Louisiana Project. If you believe this notification is an error, please contact the Project Call Center at 877-814-2539.</span></p>");
-                            $("#result").show();
-                        }
-                    },
+        if (status === 'Eligible' || status === null) {
+            html += `This structure is Eligible!<br><br>
+                     You may submit your application to the program by clicking the link below:<br>
+                     <a href="https://survey123.arcgis.com/share/c71e41c0e8a2445a9aad882686d01c58?portalUrl=https://arcportal-ucop-partners.usace.army.mil/usaceportal">SWCLA Application</a>`;
+        } else {
+            html += `<p><span style='color:#d35400'>This property is not identified as a part of the Southwest Coastal Louisiana Project. If you believe this notification is an error, please contact the Project Call Center at 877-814-2539.</span></p>`;
+        }
+
+        $("#result").html(html);
+        $("#result").show();
+    } else {
+        $("#result").html("<p><span style='color:#d35400'>This property is not identified as a part of the Southwest Coastal Louisiana Project. If you believe this notification is an error, please contact the Project Call Center at 877-814-2539.</span></p>");
+        $("#result").show();
+    }
+}
+,
 
                     error: function (xhr, status, error) {
                         // Handle errors
