@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+    <div id="editor"></div>
+    <button onclick="submitData()">Submit</button>
+    <div id="message"></div>
+
+    <script
+        src="https://redi-corps.usace.army.mil/sites/ucop/Shared%20Documents/DCO/Blue-Roof/HTML/ckeditor/ckeditor.js"></script>
+    <script src="https://js.arcgis.com/4.28/"></script>
+    <script>
+        let token
+        let editorData = ''
+        const urlParams = new URLSearchParams(window.location.search);
+        const objectID = urlParams.get('oid')
+        const QUERY_API_URL = 'https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/FSK_Dash/FeatureServer/1/query';
+
+        // Initialization for the CKEditor (or your editor of choice) goes here
+        CKEDITOR.replace('editor', {
+            extraPlugins: 'colorbutton'
+        });
+
+
+        CKEDITOR.instances.editor.on('instanceReady', function () {
+
+
+
+            require([
+                "esri/config",
+                "esri/request",
+                "esri/identity/OAuthInfo",
+                "esri/identity/IdentityManager",
+                "esri/layers/FeatureLayer"
+            ], function (esriConfig, esriRequest, OAuthInfo, IdentityManager, Editor,FeatureLayer) {
+                esriConfig.portalUrl = "https://arcportal-ucop-corps.usace.army.mil/s0portal";
+                esriConfig.request.trustedServers.push("https://arcportal-ucop-corps.usace.army.mil/s0portal");
+                const oAuthInfo = new OAuthInfo({
+                    appId: "eQeL0b8Pg30ivFkM", // 'Other Application' shared with Esri Group
+                    portalUrl: "https://arcportal-ucop-corps.usace.army.mil/s0portal",
+                    // authNamespace: "portal_oauth_inline",
+                    flowType: "auto",
+                    popup: false
+                });
+                IdentityManager.checkSignInStatus(oAuthInfo.portalUrl + "/sharing").then(() => {
+                    displayItems();
+                }).catch(() => {
+                });
+
+                IdentityManager.getCredential(oAuthInfo.portalUrl + "/sharing").then(credentials => {
+                    userid = credentials.userId;
+                    esriRequest(oAuthInfo.portalUrl + "/sharing/rest/community/users/" + userid, {
+                        query: {
+                            f: "json",
+                            token: IdentityManager.credentials[0].token // use the token from the credentials
+                        },
+                        responseType: "json"
+                    })
+                        .then(function (response) {
+                            username = response.data.fullName
+                        })
+                        .catch(function (error) {
+                            console.error("Error fetching user details: ", error);
+                        });
+
+                });
+
+                const roeRequest = esriRequest(
+                    QUERY_API_URL,
+                    {
+                        responseType: "json",
+                        query: {
+                            where: "objectid='" + objectID + "'",
+                            outFields:
+                                "*",
+                            f: "json",
+                        },
+                    }
+                );
+
+                roeRequest.then(
+                    function (response) {
+                        let attributeData = response.data.features[0].attributes.texbox;
+                        CKEDITOR.instances.editor.setData(attributeData);
+
+                    })
+            })
+
+            CKEDITOR.instances.editor.on('change', function () {
+                editorData = CKEDITOR.instances.editor.getData();
+                editorData = editorData.replace(/<span style="color: rgb\(\d+,\s*\d+,\s*\d+\);">(.*?)<\/span>/gi, '<span style="color:$1;">$2</span>');
+            });
+
+
+        })
+
+            // Function to display a message to the user
+            function showMessage(message) {
+                const messageDiv = document.getElementById('message');
+                messageDiv.textContent = message;
+            }
+
+            function showMessage(message) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+        }
+
+            function submitData() {
+            require(["esri/layers/FeatureLayer"], function(FeatureLayer) {
+                const featureLayer = new FeatureLayer({
+                    url: "https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/FSK_Dash/FeatureServer/1",
+                });
+
+                let attributes = { "objectid": objectID, "texbox": editorData }
+                const editFeature = {
+                    attributes: attributes
+                };
+                // Prepare the edits object
+                let edits = {
+                    updateFeatures: [editFeature]
+                };
+
+                featureLayer.applyEdits(edits).then(function(response) {
+                    if (response.data.updateResults && data.updateResults[0].success) {
+                        showMessage('Data successfully posted');
+                    }
+                    console.log("Edits applied successfully", response);
+                }).catch(function(error) {
+                    console.error("Error applying edits", error);
+                });
+            });
+        }
+
+
+
+
+
+
+    </script>
+</body>
+
+</html>

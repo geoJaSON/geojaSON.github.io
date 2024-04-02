@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Operation Blue Roof Status Lookup</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        .thumbnail {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            padding-top: 100px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.9);
+        }
+        .modal-content {
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 700px;
+            transition: transform 0.3s;
+            cursor: zoom-in;
+        }
+        .modal-content.zoomed {
+            transform: scale(10);
+            cursor: zoom-out;
+        }
+        .modal-title {
+            color: white;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="thumbnailGallery"></div>
+        <div id="imageModal" class="modal">
+            <span class="close">&times;</span>
+            <img class="modal-content" id="modalImage">
+            <div class="modal-title" id="modalTitle"></div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var event = urlParams.get('event');
+
+            $(document).ready(function() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var event = urlParams.get('event');
+
+            $.ajax({
+                url: "https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/FSK_Photo_Tour/FeatureServer/0/query",
+                data: {
+                    f: 'json',
+                    where: "1=1",
+                    outFields: 'objectid'
+                },
+                success: function(data) {
+                    for (var j = 0; j < data.features.length; j++) {
+                        (function(objectId) {
+                            $.ajax({
+                                url: "https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/FSK_Photo_Tour/FeatureServer/0/" + objectId + "/attachments?f=json",
+                                success: function(attachmentData) {
+                                    if (attachmentData && attachmentData.attachmentInfos && attachmentData.attachmentInfos.length > 0) {
+                                        for (var i = 0; i < attachmentData.attachmentInfos.length; i++) {
+                                            var attachmentUrl = "https://arcportal-ucop-corps.usace.army.mil/s0arcgis/rest/services/Hosted/FSK_Photo_Tour/FeatureServer/0/" + objectId + "/attachments/" + attachmentData.attachmentInfos[i].id;
+                                            var attachmentName = attachmentData.attachmentInfos[i].name;
+                                            var extension = attachmentName.split('.').pop().toLowerCase();
+                                            var fileName = attachmentName.slice(0, -extension.length - 1);
+
+                                            var thumbnail = $('<img>').attr('src', attachmentUrl).addClass('thumbnail').attr('data-title', fileName).attr('data-full-url', attachmentUrl);
+                                            $('#thumbnailGallery').append(thumbnail);
+                                        }
+                                    }
+                                }
+                            });
+                        })(data.features[j].attributes.objectid);
+                    }
+                }
+            });
+
+        });
+
+            $(document).on('click', '.thumbnail', function() {
+                var fullImageUrl = $(this).attr('data-full-url');
+                var imageTitle = $(this).attr('data-title');
+                $('#modalImage').attr('src', fullImageUrl);
+                $('#modalTitle').text(imageTitle);
+                $('#imageModal').css('display', 'block');
+            });
+
+            $('.close').on('click', function() {
+                $('#imageModal').css('display', 'none');
+            });
+
+            $(document).on('click', '.modal-content', function() {
+                $(this).toggleClass('zoomed');
+            });
+        });
+    
+    </script>
+</body>
+</html>
