@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            background-color: #002958;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: left;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .clock {
+            text-align: center;
+            color: white;
+        }
+        .clock div {
+            display: inline;
+            margin: 0 1vw;
+            font-size: 2vw; /* Adjust this value as needed */
+        }
+        .clock b {
+            font-size: 1.5vw; /* Adjust this value as needed */
+            margin-right: 0.5vw;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="clock">
+        <div id="days-indicators" class="hidden">
+            <div><span id="d-us-days">D+</span><span id="days-until"></span></div>
+            <div><span id="r-us-days">Response+</span><span id="days-response"></span></div>
+        </div>
+
+        <div><b>Zulu:</b> <span id="zulu-us-time"></span> <span id="zulu-us-day"></span></div>
+        <div><b>Local:</b> <span id="local-us-time"></span> <span id="local-us-day"></span></div>
+        <div><b id="event-label">City:</b> <span id="event-us-time"></span> <span id="event-us-day"></span></div>
+    </div>
+<script>
+        // Function to get URL parameters
+        function getParameterByName(name) {
+            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+            var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+            results = regex.exec(location.search);
+            return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+        }
+
+        function updateTime() {
+            var now = new Date();
+            
+            var zuluTime = new Date(now.toLocaleString('en-US', { timeZone: 'Zulu'}));
+            document.getElementById('zulu-us-time').textContent = zuluTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit',hour12: false});
+            document.getElementById('zulu-us-day').textContent = zuluTime.toLocaleDateString('en-US', {weekday: 'short'});
+            
+            var cityName = getParameterByName('city');
+            var timeZoneId = getParameterByName('timezone');
+
+            var eventTime = new Date(now.toLocaleString('en-US', { timeZone: timeZoneId }));
+            document.getElementById('event-us-time').textContent = eventTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit',hour12: false});
+            document.getElementById('event-us-day').textContent = eventTime.toLocaleDateString('en-US', {weekday: 'short'});
+            document.getElementById('event-label').textContent = cityName + ":";
+
+            var localTime = new Date();
+            document.getElementById('local-us-time').textContent = localTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit',hour12: false});
+            document.getElementById('local-us-day').textContent = localTime.toLocaleDateString('en-US', {weekday: 'short'});
+
+            var eventDateParam = getParameterByName('eventDate');
+        var responseDateParam = getParameterByName('responseDate');
+        if (eventDateParam) {
+            document.getElementById('days-indicators').classList.remove('hidden');
+            var eventDate = new Date(eventDateParam);
+            var diffTarget = now - eventDate;
+            var daysUntil = Math.ceil(diffTarget / (1000 * 60 * 60 * 24));
+            document.getElementById('days-until').textContent = daysUntil.toString();
+        }
+        if (responseDateParam) {
+            var responseDate = new Date(responseDateParam);
+            var diffResponse = now - responseDate;
+            var daysresponse = Math.ceil(diffResponse / (1000 * 60 * 60 * 24));
+            document.getElementById('days-response').textContent = daysresponse.toString();
+        } else {
+            document.getElementById('days-indicators').classList.add('hidden');
+        }
+        }
+
+        updateTime();
+        setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>
+<!-- http://127.0.0.1:5500/worldclock.html?city=Fort Worth&timezone=America/Chicago&eventDate=May-01-2024&responseDate=May-04-2024 -->
