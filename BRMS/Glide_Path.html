@@ -2,7 +2,6 @@
 <html>
 
 <head>
-    <title>Scrolling Marquee</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/regression/dist/regression.min.js"></script>
@@ -99,7 +98,7 @@
                     url: "https://arcportal-ucop-corps.usace.army.mil/esf3/rest/services/TempRoofing/BRMS/FeatureServer/0/query",
                     data: {
                         f: 'json',
-                        where: "workstate='Valid' AND missionid='" + missionid + "'",
+                        where: "workstate='Valid' AND missionid='" + eventID + "'",
                         outFields: 'created_date,dateqacomplete,datesenttocontractor,datecontractorcomplete',
                         returnGeometry: false
                     },
