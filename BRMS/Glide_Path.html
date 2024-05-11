@@ -99,7 +99,7 @@
                     url: "https://arcportal-ucop-corps.usace.army.mil/esf3/rest/services/TempRoofing/BRMS/FeatureServer/0/query",
                     data: {
                         f: 'json',
-                        where: "workstate='Valid' AND missionid='" + eventID + "'",
+                        where: "workstate='Valid' AND missionid='" + missionid + "'",
                         outFields: 'created_date,dateqacomplete,datesenttocontractor,datecontractorcomplete',
                         returnGeometry: false
                     },
