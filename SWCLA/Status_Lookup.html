@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Southwest Coastal Louisiana Project Eligibility Lookup</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.28/"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 3%;
+            min-height: 100vh;
+            /* Add this line */
+        }
+
+
+        .image-container {
+            text-align: center;
+            /* Center align the image */
+        }
+
+        h2 {
+            color: #3366CC;
+        }
+
+        label,
+        input,
+        button {
+            display: block;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #3366CC;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #285e8e;
+        }
+
+        #result {
+            border: 1px solid #3366CC;
+            padding: 10px;
+            color: #3366CC;
+            display: none;
+        }
+
+        .semi-transparent-background {
+            background-color: rgba(0, 0, 0, 0.5);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="image-container">
+            <img src="https://www.mvr.usace.army.mil/portals/48/docs/siteimages/SWC%20Overview.jpg" alt="Image"
+                style="max-width: 100%; max-height: 200px;">
+            <br>
+            <h1><br>APPLICATION STATUS</h1>
+            <br>
+        </div>
+        <br><br>
+        <form id="dataForm">Please search for your address:
+            <div id="propplan_description" class="form-floating mb-3 form-group">
+                <input type="text" class="form-control" id="searchid" placeholder="Street Address" required>
+                <label for="searchid">Address</label>
+            </div>
+            <div id="propplan_description" class="form-floating mb-3 form-group">
+                <input type="text" class="form-control" id="structid" placeholder="Structure ID" required>
+                <label for="searchid">Structure ID</label>
+            </div>
+            <button id="submit">Submit</button>
+            <p id="result"></p>
+            <p id="message"></p>
+        </form>
+
+    </div>
+
+    <script>
+        $(function () {
+            $("#searchid").autocomplete({
+                source: function (request, response) {
+                    $.ajax({
+                        url: "https://arcportal-ucop-partners.usace.army.mil/usacearcgis/rest/services/SWCLA/Structure_Inventory_Lookup/MapServer/0/query",
+                        dataType: "json",
+                        data: {
+                            f: 'json',
+                            where: "site_street LIKE '%" + request.term + "%'",
+                            outFields: 'site_street',
+                            returnDistinctValues: true,
+                            returnGeometry: false
+                        },
+                        success: function (data) {
+                            var suggestions = [];
+                            if (data.features) {
+                                for (var i = 0; i < data.features.length; i++) {
+                                    suggestions.push({
+                                        label: data.features[i].attributes.site_street,
+                                        value: data.features[i].attributes.site_street
+                                    });
+                                }
+                            }
+                            response(suggestions);
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("Autocomplete error: " + error);
+                        }
+                    });
+                },
+                minLength: 3,
+                select: function (event, ui) {
+                    $("#searchid").val(ui.item.value);
+                }
+            });
+
+            $("#dataForm").on("submit", function (event) {
+                event.preventDefault();
+
+                var address = $("#searchid").val();
+                //structid to integer
+                var structid = parseInt($("#structid").val());
+
+                $.ajax({
+                    url: "https://arcportal-ucop-partners.usace.army.mil/usacearcgis/rest/services/SWCLA/Structure_Inventory_Lookup/MapServer/0/query",
+                    dataType: "json",
+                    data: {
+                        f: 'json',
+                        where: "site_street LIKE '%" + address + "%' AND structure_id = " + structid,
+                        outfields: '*'
+                    },
+                    success: function (data) {
+                        if (data.features && data.features.length > 0 && data.features[0].attributes) {
+                            var attributes = data.features[0].attributes;
+                            attributes.elevation_result = attributes.elevation_result === "Not Applicable" ? "Result not yet available" : attributes.elevation_result;
+                            attributes.structural_result = attributes.structural_result === "Not Applicable" ? "Result not yet available" : attributes.structural_result;
+                            attributes.htrw_result = attributes.htrw_result === "Not Applicable" ? "Result not yet available" : attributes.htrw_result;
+                            attributes.cultural_result = attributes.cultural_result === "Not Applicable" ? "Result not yet available" : attributes.cultural_result;
+
+                            var html = `${attributes.site_street}<br>
+                    ${attributes.site_city}, ${attributes.site_state} ${attributes.site_zip}<br>
+                    ${attributes.site_county}<br><br>`;
+                            html += `<b>Project Phase:</b> ${attributes.project_phase}<br><br>
+                    <b>Elevation Survey Status:</b> ${attributes.elevation_status} (${attributes.elevation_result})<br>
+                    <b>Structure Assessment Status:</b> ${attributes.structural_status} (${attributes.structural_result})<br>
+                    <b>Environmental Asessment Status:</b> ${attributes.htrw_status} (${attributes.htrw_result})<br>
+                    <b>Cultural Resource Asessment Status:</b> ${attributes.cultural_status} (${attributes.cultural_result})<br>`;
+
+                            $("#result").html(html);
+                            $("#result").show();
+                        } else {
+                            $("#result").html("<p><span style='color:#d35400'>This property is not identified as a part of the Southwest Coastal Louisiana Project or the provided Structure ID is incorrect. If you believe this notification is an error, please contact the Project Call Center at 877-814-2539.</span></p>");
+                            $("#result").show();
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error fetching record: " + error);
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+
+</html>
