@@ -99,44 +99,36 @@
     </div>
 
     <script>
-        require([
-            "esri/config",
-            "esri/request",
-            "esri/identity/OAuthInfo",
-            "esri/identity/IdentityManager"
-        ], function (esriConfig, esriRequest, OAuthInfo, esriId) {
+        let token;
+require([
+        "esri/config",
+        "esri/portal/Portal",
+        "esri/identity/OAuthInfo",
+        "esri/identity/IdentityManager",
+        "esri/portal/PortalQueryParams"
+    ], function (esriConfig, Portal, OAuthInfo, esriId, PortalQueryParams) {
+        esriConfig.portalUrl = "https://jecop-public.usace.army.mil/portal";
+        esriConfig.request.trustedServers.push("https://jecop-public.usace.army.mil/portal");
+        const oAuthInfo = new OAuthInfo({
+            appId: "m6Gtk9esO8vqmHcU", // 'Other Application' shared with Esri Group
+            portalUrl: "https://jecop-public.usace.army.mil/portal",
+            // authNamespace: "portal_oauth_inline",
+            flowType: "auto",
+            popup: false
+        });
+        esriId.registerOAuthInfos([oAuthInfo]);
+        esriId.getCredential(oAuthInfo.portalUrl + "/sharing").then(credentials => {
+            console.log(credentials);
+            token = credentials.token;
+        });
 
-            esriConfig.portalUrl = "https://jecop-public.usace.army.mil/portal";
-            esriConfig.request.trustedServers.push("https://jecop-public.usace.army.mil/portal");
-            const oAuthInfo = new OAuthInfo({
-                appId: "m6Gtk9esO8vqmHcU", // 'Other Application' shared with Esri Group
-                portalUrl: "https://jecop-public.usace.army.mil/portal",
-                // authNamespace: "portal_oauth_inline",
-                flowType: "auto",
-                popup: false
-            });
-            esriId.checkSignInStatus(oAuthInfo.portalUrl + "/sharing").then(() => {
-                displayItems();
-            }).catch(() => {
-            });
-
-            esriId.getCredential(oAuthInfo.portalUrl + "/sharing").then(credentials => {
-                userid = credentials.userId;
-                esriRequest(oAuthInfo.portalUrl + "/sharing/rest/community/users/" + userid, {
-                    query: {
-                        f: "json",
-                        token: esriId.credentials[0].token // use the token from the credentials
-                    },
-                    responseType: "json"
-                })
-                    .then(function (response) {
-                        username = response.data.fullName
-                    })
-                    .catch(function (error) {
-                        console.error("Error fetching user details: ", error);
+            function getToken() {
+                return esriId.checkSignInStatus(oAuthInfo.portalUrl)
+                    .then(function (credential) {
+                        return credential.token;
                     });
+            }
 
-            });
             $(function () {
                 $("#searchid").autocomplete({
                     source: function (request, response) {
@@ -208,23 +200,23 @@
                                                 <a href="https://survey123.arcgis.com/share/c71e41c0e8a2445a9aad882686d01c58?portalUrl=https://arcportal-ucop-partners.usace.army.mil/usaceportal">Interest Form</a>`;
                                     }
 
-                                    if (status === 'Eligible' && pilotstudy === null) {
-                                        html += `According to our records, this structure is not eligible at this time but will be eligible when the full Fire Island Inlet to Montauk Point Nonstructural program is initiated.  Currently a smaller pilot area is being completed prior to the full project area being initiated.  Please express your interest and provide us some contact information by clicking the link below and someone will be in touch with you when the full project area is initiated.<br>
+                                    else if (status === 'Eligible' && pilotstudy === null) {
+                                        html += `<p><span style='color:#d35400'>According to our records, this structure is not eligible at this time but will be eligible when the full Fire Island Inlet to Montauk Point Nonstructural program is initiated.  Currently a smaller pilot area is being completed prior to the full project area being initiated.  Please express your interest and provide us some contact information by clicking the link below and someone will be in touch with you when the full project area is initiated.</span></p><br>
                                                 <a href="https://survey123.arcgis.com/share/c71e41c0e8a2445a9aad882686d01c58?portalUrl=https://arcportal-ucop-partners.usace.army.mil/usaceportal">Interest Form</a>`;
                                     }
 
-                                    if (status === 'Not Eligible' && tenyearflood === null) {
-                                        html += `According to our records, this property is not eligible for the Fire Island Inlet to Montauk Point Nonstructural pilot program because it is located outside the 10-year floodplain.  If you believe this information is an error, please express your interest and provide us some contact information by clicking the link below and someone will be in touch with you after further screening analysis is completed.<br>
+                                    else if (status === 'Not Eligible' && tenyearflood === 'No') {
+                                        html += `<p><span style='color:#d35400'>According to our records, this property is not eligible for the Fire Island Inlet to Montauk Point Nonstructural pilot program because it is located outside the 10-year floodplain.  If you believe this information is an error, please express your interest and provide us some contact information by clicking the link below and someone will be in touch with you after further screening analysis is completed.</span></p><br>
                                                 <a href="https://survey123.arcgis.com/share/c71e41c0e8a2445a9aad882686d01c58?portalUrl=https://arcportal-ucop-partners.usace.army.mil/usaceportal">Interest Form</a>`;
                                     }
 
-                                    if (status === 'Not Eligible' && newyorkrising === "Yes" && tenyearflood === "Yes") {
-                                        html += `According to our records, this property is not eligible for the Fire Island Inlet to Montauk Point Nonstructural pilot program because it participated in the New York Rising Program.  If you believe this information is an error, please express your interest and provide us some contact information by clicking the link below and someone will be in touch with you after further screening analysis is completed.<br>
+                                    else if (status === 'Not Eligible' && newyorkrising === "Yes" && tenyearflood === "Yes") {
+                                        html += `<p><span style='color:#d35400'>According to our records, this property is not eligible for the Fire Island Inlet to Montauk Point Nonstructural pilot program because it participated in the New York Rising Program.  If you believe this information is an error, please express your interest and provide us some contact information by clicking the link below and someone will be in touch with you after further screening analysis is completed.</span></p><br>
                                                 <a href="https://survey123.arcgis.com/share/c71e41c0e8a2445a9aad882686d01c58?portalUrl=https://jecop-public.usace.army.mil/portal">Interest Form</a>`;
                                     }
 
-                                    if (status === 'Not Eligible' && newyorkrising === "Yes" && tenyearflood === null) {
-                                        html += `According to our records, this property is not eligible for the Fire Island Inlet to Montauk Point Nonstructural pilot program because it is located outside the 10-year floodplain, and it participated in the New York Rising Program.  If you believe this information is an error, please express your interest and provide us some contact information by clicking the link below and someone will be in touch with you after further screening analysis is completed.<br>
+                                    else if (status === 'Not Eligible' && newyorkrising === "Yes" && tenyearflood === 'No') {
+                                        html += `<p><span style='color:#d35400'>According to our records, this property is not eligible for the Fire Island Inlet to Montauk Point Nonstructural pilot program because it is located outside the 10-year floodplain, and it participated in the New York Rising Program.  If you believe this information is an error, please express your interest and provide us some contact information by clicking the link below and someone will be in touch with you after further screening analysis is completed.</span></p><br>
                                                 <a href="https://survey123.arcgis.com/share/c71e41c0e8a2445a9aad882686d01c58?portalUrl=https://jecop-public.usace.army.mil/portal">Interest Form</a>`;
                                     } else {
                                         html += `<p><span style='color:#d35400'>This property is not identified as a part of the Fire Island Inlet to Montauk Point Nonstructural pilot program.  If you believe this information is an error, please express your interest and provide us some contact information by clicking the link below and someone will be in touch with you after further screening analysis is completed.</span></p><br>
