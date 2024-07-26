@@ -109,25 +109,7 @@ require([
     ], function (esriConfig, Portal, OAuthInfo, esriId, PortalQueryParams) {
         esriConfig.portalUrl = "https://jecop-public.usace.army.mil/portal";
         esriConfig.request.trustedServers.push("https://jecop-public.usace.army.mil/portal");
-        const oAuthInfo = new OAuthInfo({
-            appId: "m6Gtk9esO8vqmHcU", // 'Other Application' shared with Esri Group
-            portalUrl: "https://jecop-public.usace.army.mil/portal",
-            // authNamespace: "portal_oauth_inline",
-            flowType: "auto",
-            popup: false
-        });
-        esriId.registerOAuthInfos([oAuthInfo]);
-        esriId.getCredential(oAuthInfo.portalUrl + "/sharing").then(credentials => {
-            console.log(credentials);
-            token = credentials.token;
-        });
-
-            function getToken() {
-                return esriId.checkSignInStatus(oAuthInfo.portalUrl)
-                    .then(function (credential) {
-                        return credential.token;
-                    });
-            }
+        
 
             $(function () {
                 $("#searchid").autocomplete({
@@ -141,8 +123,7 @@ require([
                                     where: "site_street LIKE '%" + request.term + "%'",
                                     outFields: 'site_street',
                                     returnDistinctValues: true,
-                                    returnGeometry: false,
-                                    token: token
+                                    returnGeometry: false
                                 },
                                 success: function (data) {
                                     var suggestions = [];
@@ -180,8 +161,7 @@ require([
                             data: {
                                 f: 'json',
                                 where: "site_street LIKE '%" + address + "%'",
-                                outfields: '*',
-                                token: token
+                                outfields: '*'
                             },
                             success: function (data) {
                                 if (data.features && data.features.length > 0 && data.features[0].attributes) {
