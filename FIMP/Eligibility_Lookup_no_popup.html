@@ -111,9 +111,14 @@ require([
         esriConfig.request.trustedServers.push("https://jecop-public.usace.army.mil/portal");
 
 
-            function getToken() {
-                console.log("Getting token");
-            }
+        function getToken() {
+        return new Promise(function(resolve, reject) {
+            // Simulate an asynchronous operation (e.g., fetching a token)
+            setTimeout(function() {
+                resolve('Passed');
+            }, 1000); // Simulate a delay of 1 second
+        });
+    }
 
             $(function () {
                 $("#searchid").autocomplete({
