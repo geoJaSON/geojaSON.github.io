@@ -109,7 +109,11 @@ require([
     ], function (esriConfig, Portal, OAuthInfo, esriId, PortalQueryParams) {
         esriConfig.portalUrl = "https://jecop-public.usace.army.mil/portal";
         esriConfig.request.trustedServers.push("https://jecop-public.usace.army.mil/portal");
-        
+
+
+            function getToken() {
+                console.log("Getting token");
+            }
 
             $(function () {
                 $("#searchid").autocomplete({
