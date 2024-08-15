@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+
+    <title>Weather Data Explorer</title>
+</head>
+<style>
+    /* html,
+    body,
+    #mapDiv {
+      padding: 0;
+      margin: 0;
+      height: 80%;
+      width: 100%;
+    } */
+</style>
+
+<head>
+    <style>
+        #menu-panel {
+            --calcite-color-background: var(--calcite-color-foreground-1);
+        }
+
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        #timeSlider {
+            position: absolute;
+            left: 5%;
+            right: 5%;
+            bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <calcite-shell>
+        <calcite-shell-panel slot="panel-start">
+            <calcite-panel id="menu-panel">
+                <calcite-menu layout="vertical">
+                    <calcite-menu-item text="Radar" id="radar"></calcite-menu-item>
+                    <calcite-menu-item text="National Forecast">
+                        <calcite-menu-item slot="submenu-item" text="Day 1" id="day1national"></calcite-menu-item>
+                        <calcite-menu-item slot="submenu-item" text="Day 2" id="day2national"></calcite-menu-item>
+                        <calcite-menu-item slot="submenu-item" text="Day 3" id="day3national"></calcite-menu-item>
+                    </calcite-menu-item>
+                    <calcite-menu-item text="Severe Weather">
+                        <calcite-menu-item slot="submenu-item" text="Outlooks">
+                            <calcite-menu-item slot="submenu-item" text="Day 1" id="severeDay1"></calcite-menu-item>
+                            <calcite-menu-item slot="submenu-item" text="Day 2" id="severeDay2"></calcite-menu-item>
+                            <calcite-menu-item slot="submenu-item" text="Day 3" id="severeDay3"></calcite-menu-item>
+                        </calcite-menu-item>
+                        <calcite-menu-item slot="submenu-item" text="Watches & Warnings"
+                            id="warnings"></calcite-menu-item>
+                        <calcite-menu-item slot="submenu-item" text="Mesoscale" id="meso"></calcite-menu-item>
+
+                        <calcite-menu-item slot="submenu-item" text="Storm Reports" id="reports"></calcite-menu-item>
+                    </calcite-menu-item>
+                    <calcite-menu-item text="Precipitation">
+                        <calcite-menu-item slot="submenu-item" text="Excessive Rainfall" id="excessive">
+                            <calcite-menu-item slot="submenu-item" text="Day 1" id="excessiveDay1"> </calcite-menu-item>
+                            <calcite-menu-item slot="submenu-item" text="Day 2" id="excessiveDay2"> </calcite-menu-item>
+                            <calcite-menu-item slot="submenu-item" text="Day 3" id="excessiveDay3"> </calcite-menu-item>
+                            <calcite-menu-item slot="submenu-item" text="Day 4" id="excessiveDay4"> </calcite-menu-item>
+                            <calcite-menu-item slot="submenu-item" text="Day 5" id="excessiveDay5"> </calcite-menu-item>
+                        </calcite-menu-item>
+                        <calcite-menu-item slot="submenu-item" text="QPE" id="qpe"></calcite-menu-item>
+                        <calcite-menu-item slot="submenu-item" text="QPF" id="qpf">
+                            <calcite-menu-item slot="submenu-item" text="Day 1" id="qpfDay1"> </calcite-menu-item>
+                            <calcite-menu-item slot="submenu-item" text="Day 2" id="qpfDay2"> </calcite-menu-item>
+                            <calcite-menu-item slot="submenu-item" text="Day 3" id="qpfDay3"> </calcite-menu-item>
+                            <calcite-menu-item slot="submenu-item" text="Day 4" id="qpfDay4"> </calcite-menu-item>
+                            <calcite-menu-item slot="submenu-item" text="Day 5" id="qpfDay5"> </calcite-menu-item>
+                        </calcite-menu-item>
+                        <calcite-menu-item slot="submenu-item" text="Streams" id="fim"></calcite-menu-item>
+                    <calcite-menu-item slot="submenu-item" text="Flood" id="flood"></calcite-menu-item>
+                </calcite-menu-item>
+                    <calcite-menu-item text="Tropical" id="tropical"> </calcite-menu-item>
+                    <calcite-menu-item text="Fire" id="fire"> </calcite-menu-item>
+                    <calcite-menu-item text="Drought" id="drought"> </calcite-menu-item>
+                    <calcite-menu-item text="Winter" id="winter"> </calcite-menu-item>
+                </calcite-menu>
+            </calcite-panel>
+        </calcite-shell-panel>
+        <calcite-panel>
+            <div id="viewDiv" style="height:100%; width:100%;"></div>
+            <div id="timeSlider"></div>
+        </calcite-panel>
+    </calcite-shell>
+</body>
+<script>
+    require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/layers/ImageryLayer",
+        "esri/widgets/TimeSlider",
+        "esri/layers/MapImageLayer",
+        "esri/widgets/Legend"
+    ], function (Map, MapView, FeatureLayer, ImageryLayer, TimeSlider, MapImageLayer,Legend) {
+
+        var map = new Map({
+            basemap: "topo-vector"
+        });
+
+        var view = new MapView({
+            container: "viewDiv",
+            map: map,
+            center: [-95.33, 38.69], // Set your map's center coordinates
+            zoom: 5
+        });
+
+
+        var radarLayer = new ImageryLayer({
+            url: "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer",
+
+        });
+
+        // time slider widget initialization
+        const timeSlider = new TimeSlider({
+            container: "timeSlider",
+            view: view,
+            loop: true,
+            mode: "instant",
+            timeVisible: true, // show the time stamps on the timeslider
+            loop: true
+        });
+
+        view.whenLayerView(radarLayer).then((lv) => {
+            timeSlider.fullTimeExtent = radarLayer.timeInfo.fullTimeExtent;
+            console.log(timeSlider.state)
+            timeSlider.play()
+        });
+
+        view.when(() => {
+          // get the first layer in the collection of operational layers in the WebMap
+          // when the resources in the MapView have loaded.
+          const featureLayer = map.layers.getItemAt(0);
+
+          const legend = new Legend({
+            view: view,
+            layerInfos: [
+              {
+                layer: featureLayer,
+                title: "NY Educational Attainment"
+              }
+            ]
+          });
+
+          // Add widget to the bottom right corner of the view
+          view.ui.add(legend, "top-right");
+
+        });
+        //Forecast Layers
+        var nationalDay1 = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/natl_fcst_wx_chart/MapServer",
+            visible: false,
+            sublayers: [{
+                id: 0
+            }]
+
+        });
+        var nationalDay2 = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/natl_fcst_wx_chart/MapServer",
+            visible: false,
+            sublayers: [{
+                id: 12
+            }]
+
+        });
+
+        var nationalDay3 = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/natl_fcst_wx_chart/MapServer",
+            visible: false,
+            sublayers: [{
+                id: 24
+            }]
+
+        });
+
+
+        var severeDay1 = new FeatureLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/1",
+            visible: false
+        });
+        severeDay1Tornado = new FeatureLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/2",
+            visible: false
+        });
+        severeDay1Hail = new FeatureLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/4",
+            visible: false
+        });
+        severeDay1Wind = new FeatureLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/6",
+            visible: false
+        });
+
+
+
+
+        var severeDay2 = new FeatureLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/9",
+            visible: false
+        });
+        severeDay2Tornado = new FeatureLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/10",
+            visible: false
+        });
+        severeDay2Hail = new FeatureLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/12",
+            visible: false
+        });
+        severeDay2Wind = new FeatureLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/14",
+            visible: false
+        });
+
+        var severeDay3 = new FeatureLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/17",
+            visible: false
+        });
+        severeDay3Outlook = new FeatureLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/18",
+            visible: false
+        });
+
+        mesoscale = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/spc_mesoscale_discussion/MapServer",
+            visible: false,
+            popupEnabled: true
+        });
+
+        wnw = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/eventdriven/rest/services/WWA/watch_warn_adv/MapServer",
+            visible: false
+        });
+        reports = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/obs/nws_local_storm_reports/MapServer",
+            visible: false
+        });
+
+        excessive = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_precip_hazards/MapServer",
+            sublayers: [{
+                id: 0,
+                visible: false
+            }, {
+                id: 1,
+                visible: false
+            },
+            {
+                id: 2,
+                visible: false
+            },
+            {
+                id: 3,
+                visible: false
+            },
+            {
+                id: 4,
+                visible: false
+            }
+            ],
+            visible: false
+        });
+
+        qpe = new ImageryLayer({
+            url: "https://mapservices.weather.noaa.gov/raster/rest/services/obs/mrms_qpe/ImageServer",
+            visible: false
+        });
+
+        qpf = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/precip/wpc_qpf/MapServer",
+            sublayers: [{
+                id: 0,
+                visible: false
+            }, {
+                id: 1,
+                visible: false
+            },
+            {
+                id: 2,
+                visible: false
+            },
+            {
+                id: 3,
+                visible: false
+            },
+            {
+                id: 4,
+                visible: false
+            }
+            ],
+            visible: false
+        });
+
+        surge = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_PeakStormSurge/MapServer",
+            visible: false
+        });
+
+        tropical = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather_summary/MapServer",
+            visible: false
+        });
+
+        fire = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/fire_weather/SPC_firewx/MapServer",
+            visible: false
+        });
+
+        drought = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/hazards/cpc_weather_hazards/MapServer",
+            visible: false
+        });
+
+        fim = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/obs/NWM_Stream_Analysis/MapServer",
+            visible: false
+        });
+flood = new FeatureLayer({
+            url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/sig_riv_fld_outlk/MapServer/0",
+            visible: false
+        });
+        floodoutlook = new MapImageLayer({
+            url: "https://mapservices.weather.noaa.gov/experimental/rest/services/owp_fho/MapServer",
+            visible: false
+        });
+        map.addMany([radarLayer, nationalDay1, nationalDay2, nationalDay3]);
+
+        map.addMany([severeDay1Tornado, severeDay1Hail, severeDay1Wind, severeDay1]);
+        map.addMany([severeDay2Tornado, severeDay2Hail, severeDay2Wind, severeDay2]);
+        map.addMany([severeDay3Outlook, severeDay3]);
+        map.addMany([mesoscale, wnw, reports, excessive, qpe, qpf,tropical,surge,fire,drought,flood,fim,floodoutlook]);
+
+        function hideAllLayers(map) {
+
+            map.layers.forEach(function (layer) {
+                layer.visible = false;
+            });
+            timeSlider.visible = false;
+            
+        }
+
+
+
+
+
+        document.getElementById('radar').addEventListener('click', function () {
+            hideAllLayers(map)
+            radarLayer.visible = true;
+            timeSlider.visible = true
+        });
+
+        document.getElementById('day1national').addEventListener('click', function () {
+            hideAllLayers(map)
+            nationalDay1.visible = true;
+        });
+
+        document.getElementById('day2national').addEventListener('click', function () {
+            hideAllLayers(map)
+            nationalDay2.visible = true
+        });
+
+        document.getElementById('day3national').addEventListener('click', function () {
+            hideAllLayers(map)
+            nationalDay3.visible = true
+        });
+
+        document.getElementById('severeDay1').addEventListener('click', function () {
+            hideAllLayers(map)
+            severeDay1Tornado.visible = true;
+            severeDay1Hail.visible = true;
+            severeDay1Wind.visible = true;
+            severeDay1.visible = true;
+        });
+        document.getElementById('severeDay2').addEventListener('click', function () {
+            hideAllLayers(map)
+            severeDay2Tornado.visible = true;
+            severeDay2Hail.visible = true;
+            severeDay2Wind.visible = true;
+            severeDay2.visible = true;
+        });
+
+        document.getElementById('severeDay3').addEventListener('click', function () {
+            hideAllLayers(map)
+            severeDay3Outlook.visible = true;
+            severeDay3.visible = true;
+        });
+
+        document.getElementById('meso').addEventListener('click', function () {
+            hideAllLayers(map)
+            mesoscale.visible = true;
+        });
+
+        document.getElementById('warnings').addEventListener('click', function () {
+            hideAllLayers(map)
+            wnw.visible = true;
+        });
+
+        document.getElementById('reports').addEventListener('click', function () {
+            hideAllLayers(map)
+            reports.visible = true;
+        });
+        document.getElementById('excessive').addEventListener('click', function () {
+            hideAllLayers(map)
+            excessive.visible = true;
+        });
+        document.getElementById('qpe').addEventListener('click', function () {
+            hideAllLayers(map)
+            qpe.visible = true;
+        });
+        document.getElementById('excessiveDay1').addEventListener('click', function () {
+            hideAllLayers(map)
+            excessive.visible = true,
+            excessive.findSublayerById(0).visible = true
+            excessive.findSublayerById(1).visible = false
+            excessive.findSublayerById(2).visible = false
+            excessive.findSublayerById(3).visible = false
+            excessive.findSublayerById(4).visible = false
+        });
+
+        document.getElementById('excessiveDay2').addEventListener('click', function () {
+            hideAllLayers(map)
+            excessive.visible = true,
+            excessive.findSublayerById(0).visible = false
+            excessive.findSublayerById(1).visible = true
+            excessive.findSublayerById(2).visible = false
+            excessive.findSublayerById(3).visible = false
+            excessive.findSublayerById(4).visible = false
+
+        });
+
+        document.getElementById('excessiveDay3').addEventListener('click', function () {
+            hideAllLayers(map)
+            excessive.visible = true,
+            excessive.findSublayerById(0).visible = false
+            excessive.findSublayerById(1).visible = false
+            excessive.findSublayerById(2).visible = true
+            excessive.findSublayerById(3).visible = false
+            excessive.findSublayerById(4).visible = false
+        });
+        document.getElementById('excessiveDay4').addEventListener('click', function () {
+            hideAllLayers(map)
+            excessive.visible = true,
+            excessive.findSublayerById(0).visible = false
+            excessive.findSublayerById(1).visible = false
+            excessive.findSublayerById(2).visible = false
+            excessive.findSublayerById(3).visible = true
+            excessive.findSublayerById(4).visible = false
+        });
+        document.getElementById('excessiveDay5').addEventListener('click', function () {
+            hideAllLayers(map)
+            excessive.visible = true,
+            excessive.findSublayerById(0).visible = false
+            excessive.findSublayerById(1).visible = false
+            excessive.findSublayerById(2).visible = false
+            excessive.findSublayerById(3).visible = false
+            excessive.findSublayerById(4).visible = true
+        });
+
+        document.getElementById('tropical').addEventListener('click', function () {
+            hideAllLayers(map)
+            tropical.visible = true;
+            surge.visible = true;
+        });
+document.getElementById('fire').addEventListener('click', function () {
+            hideAllLayers(map)
+            fire.visible = true;
+        });
+document.getElementById('drought').addEventListener('click', function () {
+            hideAllLayers(map)
+            drought.visible = true;
+        });
+        document.getElementById('fim').addEventListener('click', function () {
+            hideAllLayers(map)
+            fim.visible = true;
+            flood.visible = true;
+        });
+        document.getElementById('flood').addEventListener('click', function () {
+            hideAllLayers(map)
+            floodoutlook.visible = true;
+        });
+
+    });
+</script>
+
+</html>
