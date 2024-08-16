@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Scrolling Marquee</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.21/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.21/"></script>
+    <style>
+        #marquee {
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            color: white;
+            vertical-align: top;
+        }
+
+        marquee {
+            width: 100%;
+            margin: 0 auto;
+            white-space: nowrap;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .hazard {
+            color: red;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+    <marquee id="marquee" behavior="scroll" direction="left" scrollamount="5"></marquee>
+
+    <script>
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        const grid = getQueryParam('grid');
+        const latitude = getQueryParam('latitude');
+        const longitude = getQueryParam('longitude');
+        const feature_url = getQueryParam('feature_url');
+        const event_id = getQueryParam('event_id');
+
+        function degToCompass(num) {
+            var val = Math.floor((num / 22.5) + 0.5);
+            var arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+            return arr[(val % 16)];
+        }
+    
+        require([
+            "esri/identity/IdentityManager",
+            "esri/request",
+            "dojo/domReady!"
+        ], function (IdentityManager, esriRequest) {
+            const conditionsApiUrl = `https://api.weather.gov/gridpoints/LWX/${grid}`;
+    
+            function fetchWeatherWarnings() {
+                const warningsApiUrl = `https://api.weather.gov/alerts/active?point=${latitude},${longitude}`;
+                return fetch(warningsApiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        let warningsHtml = '';
+                        if (data.features && data.features.length > 0) {
+                            const warnings = data.features.map(feature => ({
+                                event: feature.properties.event,
+                                description: feature.properties.description,
+                                severity: feature.properties.severity,
+                                urgency: feature.properties.urgency,
+                                areas: feature.properties.areaDesc,
+                                
+                            }));
+                            // Format warnings for display
+                            warningsHtml = warnings.map(warning =>
+                                `<span class="hazard">${warning.event} - ${warning.severity} (${warning.urgency}): ${warning.areas}</span>`
+                            ).join(' / '); 
+                        }
+                        return warningsHtml;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching weather warnings:', error);
+                        return ''; 
+                    });
+            }
+    
+            function fetchWeatherConditions() {
+                return fetchWeatherWarnings().then(warningsHtml => {
+                    return fetch(conditionsApiUrl)
+                        .then(response => response.json())
+                        .then(data => {
+                            const now = new Date();
+                            const weatherEntries = data.properties.weather.values;
+                            const closestWeatherEntry = weatherEntries.reduce((closest, entry) => {
+                                const entryTimeStart = new Date(entry.validTime.split("/")[0]);
+                                const entryTimeEnd = new Date(entry.validTime.split("/")[1]);
+                                if (now >= entryTimeStart && now <= entryTimeEnd) return entry; // Current time falls within the validTime
+                                const closestTime = closest ? new Date(closest.validTime.split("/")[0]) : null;
+                                return (!closest || (Math.abs(entryTimeStart - now) < Math.abs(closestTime - now))) ? entry : closest;
+                            }, null);
+    
+                            let weatherDescription = 'No weather data';
+                            if (closestWeatherEntry && closestWeatherEntry.value) {
+                                weatherDescription = closestWeatherEntry.value.map(condition => {
+                                    const coverage = condition.coverage ? `${condition.coverage}` : '';
+                                    const weather = condition.weather ? `${condition.weather.replace(/_/g, ' ')}` : '';
+                                    const intensity = condition.intensity ? `${condition.intensity}` : '';
+                                    return `${coverage} ${intensity} ${weather}`;
+                                }).join(' and ');
+                            }
+    
+                            const weatherEntriesTemp = data.properties.temperature.values;
+                            const closestWeatherTemp = weatherEntriesTemp.reduce((closest, entry) => {
+                                const entryTime = new Date(entry.validTime.split("/")[0]);
+                                const closestTime = closest ? new Date(closest.validTime.split("/")[0]) : null;
+                                return (!closest || (Math.abs(entryTime - now) < Math.abs(closestTime - now))) ? entry : closest;
+                            }, null);
+    
+                            const temperature = closestWeatherTemp ? `${Math.round((closestWeatherTemp.value * 1.8 + 32))}°F` : 'No data';
+    
+                            const weatherEntriesWave = data.properties.waveHeight.values;
+                            const closestWeatherWave = weatherEntriesWave.reduce((closest, entry) => {
+                                const entryTime = new Date(entry.validTime.split("/")[0]);
+                                const closestTime = closest ? new Date(closest.validTime.split("/")[0]) : null;
+                                return (!closest || (Math.abs(entryTime - now) < Math.abs(closestTime - now))) ? entry : closest;
+                            }, null);
+    
+                            const waves = closestWeatherWave ? `${Math.round(closestWeatherWave.value * 3.2808)} ft` : 'No data';
+    
+                            const weatherEntriesWind = data.properties.windSpeed.values;
+                            const closestWeatherWind = weatherEntriesWind.reduce((closest, entry) => {
+                                const entryTime = new Date(entry.validTime.split("/")[0]);
+                                const closestTime = closest ? new Date(closest.validTime.split("/")[0]) : null;
+                                return (!closest || (Math.abs(entryTime - now) < Math.abs(closestTime - now))) ? entry : closest;
+                            }, null);
+                            const windspeed = closestWeatherWind ? `${Math.round(closestWeatherWind.value * 0.539957)} kts` : 'No data';
+    
+                            const weatherEntriesWindd = data.properties.windDirection.values;
+                            const closestWeatherWindd = weatherEntriesWindd.reduce((closest, entry) => {
+                                const entryTime = new Date(entry.validTime.split("/")[0]);
+                                const closestTime = closest ? new Date(closest.validTime.split("/")[0]) : null;
+                                return (!closest || (Math.abs(entryTime - now) < Math.abs(closestTime - now))) ? entry : closest;
+                            }, null);
+    
+                            const winddir = closestWeatherWindd ? `${degToCompass(Math.round(closestWeatherWindd.value))}` : 'No data';
+    
+                            // Processing hazards
+                            let hazardsHtml = '';
+                            if (data.properties.hazards && data.properties.hazards.values.length > 0) {
+                                const hazards = data.properties.hazards.values.flatMap(hazardEntry =>
+                                    hazardEntry.value.map(hazard => ({
+                                        time: hazardEntry.validTime,
+                                        description: `${hazard.phenomenon} (${hazard.significance})`
+                                    }))
+                                ).filter(hazard => hazard.description);
+    
+                                hazardsHtml = hazards.map(hazard =>
+                                    `<span class="hazard">${hazard.description}</span>`
+                                ).join('<br>');
+                            }
+    
+                            return { temperature, waves, windspeed, winddir, hazardsHtml, weatherDescription, warningsHtml };
+                        });
+                });
+            }
+    
+            function requestData() {
+                esriRequest(`${feature_url}/query`, {
+                    responseType: "json",
+                    query: {
+                        f: 'json',
+                        where: `eventid = '${event_id}' OR eventid IS NULL`,
+                        outFields: 'event, time, days',
+                        returnGeometry: false
+                    }
+                }).then(function (response) {
+                    let data = response.data;
+                    if (data.features && data.features.length > 0) {
+                        // Sort data by 'time'
+                        data.features.sort(function (a, b) {
+                            return new Date(a.attributes.time) - new Date(b.attributes.time);
+                        });
+    
+                        var message = "";
+                        for (var i = 0; i < data.features.length; i++) {
+                            message += "<b>" + data.features[i].attributes.event + "</b>  ";
+                            message += data.features[i].attributes.time + " EDT  ";
+                            if (data.features[i].attributes.days === 'Sun,Mon,Tue,Wed,Thu,Fri,Sat') {
+                                message += "Everyday";
+                            } else {
+                                message += data.features[i].attributes.days;
+                            }
+                            if (i !== data.features.length - 1) {
+                                message += "  ||   ";
+                            }
+                        }
+                        // Fetch and append weather conditions to the message
+                        fetchWeatherConditions().then(weatherConditions => {
+                            message += " -------      CURRENT WEATHER: " + weatherConditions.weatherDescription + "  ||   Temp: " + weatherConditions.temperature; // Append weather conditions
+                            message += "  ||   Wind: " + weatherConditions.winddir + " " + weatherConditions.windspeed;
+                            message += "  ||   Wave Height: " + weatherConditions.waves;
+                            message += " || " + weatherConditions.warningsHtml; // Append warnings HTML
+                            document.getElementById('marquee').innerHTML = message; // Use innerHTML to support HTML content
+                        });
+                    }
+                }).catch(function (error) {
+                    alert("Error: " + error.name + "\n" + error.message);
+                });
+            }
+    
+            requestData();
+    
+            // Set the interval with a delay
+            setTimeout(() => {
+                setInterval(requestData, 120000); // 120000ms = 2 minutes
+            }, 120000); // Initial delay of 2 minutes
+        });
+    </script>
+</body>
+
+</html>
