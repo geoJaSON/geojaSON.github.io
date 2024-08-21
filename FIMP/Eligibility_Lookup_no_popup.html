@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Fire Island Inlet to Montauk Point Nonstructural Pilot Program Eligibility Lookup</title>
+    <title>Fire Island Inlet to Montauk Point (FIMP) Home Elevation Pilot Project</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -88,7 +88,7 @@
         <form id="dataForm">Please start typing your address, then select from the dropdown list. If your address does
             not appear, you may still click Submit:
             <div id="propplan_description" class="form-floating mb-3 form-group">
-                <input type="text" class="form-control" id="searchid" placeholder="Street Address">
+                <input type="text" class="form-control" id="searchid" placeholder="Street Address" required>
                 <label for="searchid">Address</label>
             </div>
             <button id="submit">Submit</button>
@@ -186,7 +186,7 @@ require([
                                                 ${attributes.site_county}<br><br>`;
 
                                     if (status === 'Eligible' || pilotstudy === "Yes") {
-                                        html += `According to our records, this structure is eligible for the Fire Island Inlet to Montauk Point Nonstructural pilot program.  Please express your interest and provide us some contact information by clicking the link below.<br>
+                                        html += `According to our records, your property is potentially eligible to be elevated through the FIMP Home Elevation Pilot Project. Please fill out an Interest Form with your contact information and interest in the project. The project team will be in contact with you shortly.<br>
                                                 <a href="https://survey123.arcgis.com/share/b10b012750bd41d88dde9bce651202eb?portalUrl=https://jecop-public.usace.army.mil/portal&field:structure_id=${structureid}" target="_blank">Interest Form</a>`;
                                     }
 
@@ -209,14 +209,14 @@ require([
                                         html += `<p><span style='color:#d35400'>According to our records, this property is not eligible for the Fire Island Inlet to Montauk Point Nonstructural pilot program because it is located outside the 10-year floodplain, and it participated in the New York Rising Program.  If you believe this information is an error, please express your interest and provide us some contact information by clicking the link below and someone will be in touch with you after further screening analysis is completed.</span></p><br>
                                                 <a href="https://survey123.arcgis.com/share/b10b012750bd41d88dde9bce651202eb?portalUrl=https://jecop-public.usace.army.mil/portal&field:structure_id=${structureid}" target="_blank">Interest Form</a>`;
                                     } else {
-                                        html += `<p><span style='color:#d35400'>This property is not identified as a part of the Fire Island Inlet to Montauk Point Nonstructural pilot program.  If you believe this information is an error, please express your interest and provide us some contact information by clicking the link below and someone will be in touch with you after further screening analysis is completed.</span></p><br>
+                                        html += `<p><span style='color:#d35400'>According to our records, your property is not potentially eligible to be elevated through the FIMP Home Elevation Pilot Project. If you believe this information is an error, please fill out an Interest Form with your contact information and interest in the project. The project team will be in contact with you shortly.</span></p><br>
                                                 <a href="https://survey123.arcgis.com/share/b10b012750bd41d88dde9bce651202eb?portalUrl=https://jecop-public.usace.army.mil/portal&field:structure_id=${structureid}" target="_blank">Interest Form</a>`;
                                     }
 
                                     $("#result").html(html);
                                     $("#result").show();
                                 } else {
-                                    $("#result").html(`<p><span style='color:#d35400'>This property is not identified as a part of the Fire Island Inlet to Montauk Point Nonstructural pilot program.  If you believe this information is an error, please express your interest and provide us some contact information by clicking the link below and someone will be in touch with you after further screening analysis is completed.</span></p><br>
+                                    $("#result").html(`<p><span style='color:#d35400'>According to our records, your property is not potentially eligible to be elevated through the FIMP Home Elevation Pilot Project. If you believe this information is an error, please fill out an Interest Form with your contact information and interest in the project. The project team will be in contact with you shortly.</span></p><br>
                                                 <a href="https://survey123.arcgis.com/share/b10b012750bd41d88dde9bce651202eb?portalUrl=https://jecop-public.usace.army.mil/portal" target="_blank">Interest Form</a>`);
                                     $("#result").show();
                                 }
