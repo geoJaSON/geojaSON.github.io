@@ -180,12 +180,16 @@ require([
                                     var tenyearflood = attributes.WithinUSACE_10YearFloodplain;
                                     var pilotstudy = attributes.Pilot_Study;
                                     var structureid = attributes.structure_id;
-
+                                    console.log(status);
+                                    console.log(newyorkrising);
+                                    console.log(tenyearflood);
+                                    console.log(pilotstudy);
+                                    console.log(structureid);
                                     var html = `${attributes.site_street}<br>
                                                 ${attributes.site_city}, ${attributes.site_state} ${attributes.site_zip}<br>
                                                 ${attributes.site_county}<br><br>`;
 
-                                    if (status === 'Eligible' || pilotstudy === "Yes") {
+                                    if (status === 'Eligible' && pilotstudy === "Yes") {
                                         html += `According to our records, your property is potentially eligible to be elevated through the FIMP Home Elevation Pilot Project. Please fill out an Interest Form with your contact information and interest in the project. The project team will be in contact with you shortly.<br>
                                                 <a href="https://survey123.arcgis.com/share/b10b012750bd41d88dde9bce651202eb?portalUrl=https://jecop-public.usace.army.mil/portal&field:structure_id=${structureid}" target="_blank">Interest Form</a>`;
                                     }
