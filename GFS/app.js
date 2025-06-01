@@ -61,8 +61,43 @@ require([
                         { fieldName: "category", label: "Storm Category" },
                         { fieldName: "debris", label: "Estimated Debris" }
                     ]
+                },
+                {
+                    type: "text",
+                    text: "{landfall_section}"
                 }
-            ]
+            ],
+            expressionInfos: [{
+                name: "landfall_section",
+                title: "Landfall Information",
+                expression: `
+                    var location = $feature.location;
+                    var forecastTime = $feature.forecast_time;
+                    var windSpeed = $feature.wind_speed;
+                    var gust = $feature.gust;
+                    var category = $feature.storm_category;
+                    
+                    if (!location || !forecastTime) {
+                        return "Not enough forecast data to estimate landfall";
+                    }
+                    
+                    var landfallInfo = "Expected Landfall:\\n";
+                    landfallInfo += "Location: " + location + "\\n";
+                    landfallInfo += "Time: " + forecastTime + "\\n";
+                    
+                    if (windSpeed) {
+                        landfallInfo += "Wind Speed: " + windSpeed + " mph\\n";
+                    }
+                    if (gust) {
+                        landfallInfo += "Gusts: " + gust + " mph\\n";
+                    }
+                    if (category) {
+                        landfallInfo += "Category: " + category;
+                    }
+                    
+                    return landfallInfo;
+                `
+            }]
         }
     });
 
@@ -423,6 +458,37 @@ require([
 
     // Wait for view to load before adding mobile controls and initializing chart
     view.when(() => {
+        // Add mobile info panel toggle
+        const infoPanel = document.querySelector('.info-panel');
+        const infoPanelToggle = document.createElement('button');
+        infoPanelToggle.className = 'info-panel-toggle';
+        document.body.appendChild(infoPanelToggle);
+
+        infoPanelToggle.addEventListener('click', () => {
+            infoPanel.classList.toggle('expanded');
+        });
+
+        // // Add share functionality
+        // const shareButton = document.getElementById('shareButton');
+        // shareButton.addEventListener('click', () => {
+        //     const url = window.location.href;
+        //     if (navigator.share) {
+        //         navigator.share({
+        //             title: 'Hurricane Impact Analysis',
+        //             text: 'Check out this hurricane impact analysis',
+        //             url: url
+        //         }).catch(console.error);
+        //     } else {
+        //         navigator.clipboard.writeText(url).then(() => {
+        //             alert('Link copied to clipboard!');
+        //         }).catch(console.error);
+        //     }
+        // });
+
+        // Update last updated timestamp
+        // const lastUpdated = document.getElementById('lastUpdated');
+        // lastUpdated.textContent = new Date().toLocaleString();
+
         // Initialize chart after DOM is ready
         const ctx = document.getElementById('landUseChart');
         if (ctx) {
@@ -511,6 +577,11 @@ require([
             legendToggle.addEventListener('click', () => {
                 legendElement.classList.toggle('expanded');
             });
+
+            // Add collapsed class by default on mobile
+            if (window.innerWidth <= 768) {
+                legendElement.classList.add('collapsed');
+            }
         }
 
         // Handle splash screen
@@ -634,6 +705,11 @@ require([
 
     // Function to update map and data based on selections
     function updateMapForSelection(storm, modelRun) {
+        // Show loading state
+        document.querySelectorAll('.card').forEach(card => {
+            card.classList.add('loading');
+        });
+
         let whereClause = `name = '${storm}'`;
         if (modelRun) {
             whereClause += ` AND modelrun = '${modelRun}'`;
@@ -649,13 +725,37 @@ require([
                 const feature = results.features[0];
                 const attrs = feature.attributes;
                 
-                // Update summary cards
-                document.getElementById("totalResidences").textContent = formatNumber(attrs.total_roofs);
-                document.getElementById("damagedRoofs").textContent = formatNumber(attrs.damaged_roofs);
-                document.getElementById("totalPopulation").textContent = formatNumber(attrs.total_pop);
-                document.getElementById("cePopulation").textContent = formatNumber(attrs.ce_pop);
-                document.getElementById("powerOutages").textContent = formatNumber(attrs.outages_power);
-                document.getElementById("debrisAmount").textContent = formatNumber(attrs.debris);
+                // Update summary cards with severity indicators
+                updateCardWithSeverity("residencesCard", attrs.total_roofs, 1000);
+                updateCardWithSeverity("damageCard", attrs.damaged_roofs, 100);
+                updateCardWithSeverity("populationCard", attrs.total_pop, 1000);
+                updateCardWithSeverity("ceCard", attrs.ce_pop, 100);
+                updateCardWithSeverity("powerCard", attrs.outages_power, 100);
+                updateCardWithSeverity("debrisCard", attrs.debris, 1000);
+
+                // Update landfall information
+                const landfallLocation = document.getElementById("landfallLocation");
+                const landfallTime = document.getElementById("landfallTime");
+                const landfallWind = document.getElementById("landfallWind");
+                const landfallGust = document.getElementById("landfallGust");
+                const landfallCategory = document.getElementById("landfallCategory");
+
+                if (attrs.location && attrs.forecast_time) {
+                    landfallLocation.textContent = attrs.location;
+                    landfallTime.textContent = attrs.forecast_time;
+                    landfallWind.textContent = attrs.wind_speed ? `${attrs.wind_speed} mph` : '-';
+                    landfallGust.textContent = attrs.gust ? `${attrs.gust} mph` : '-';
+                    landfallCategory.textContent = attrs.storm_category || '-';
+                } else {
+                    landfallLocation.textContent = 'Not enough forecast data';
+                    landfallTime.textContent = '-';
+                    landfallWind.textContent = '-';
+                    landfallGust.textContent = '-';
+                    landfallCategory.textContent = '-';
+                }
+
+                // Update last updated timestamp
+                document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
 
                 // Query contour layer for land use data
                 contourLayer.queryFeatures({
@@ -686,6 +786,11 @@ require([
             }
         }).catch(error => {
             console.error("Error querying storm data:", error);
+        }).finally(() => {
+            // Remove loading state
+            document.querySelectorAll('.card').forEach(card => {
+                card.classList.remove('loading');
+            });
         });
 
         // Update infrastructure table
@@ -824,5 +929,24 @@ require([
         landUseChart.data.labels = filteredData.map(item => item.label);
         landUseChart.data.datasets[0].data = filteredData.map(item => item.value);
         landUseChart.update();
+    }
+
+    // Helper function to update cards with severity indicators
+    function updateCardWithSeverity(cardId, value, threshold) {
+        const card = document.getElementById(cardId);
+        const valueElement = card.querySelector('p');
+        valueElement.textContent = formatNumber(value);
+
+        // Remove existing severity classes
+        card.classList.remove('severe', 'moderate', 'mild');
+
+        // Add appropriate severity class
+        if (value > threshold * 2) {
+            card.classList.add('severe');
+        } else if (value > threshold) {
+            card.classList.add('moderate');
+        } else {
+            card.classList.add('mild');
+        }
     }
 }); 

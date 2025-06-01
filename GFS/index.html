@@ -43,58 +43,61 @@
                     <h3>Layers</h3>
                     <div class="layer-toggle">
                         <input type="checkbox" id="coneLayer">
-                        <label for="coneLayer">Forecast Cone</label>
+                        <label for="coneLayer" data-tooltip="Shows the forecast cone of uncertainty">Forecast Cone</label>
                     </div>
                     <div class="layer-toggle">
                         <input type="checkbox" id="contourLayer" checked>
-                        <label for="contourLayer">Wind Contours</label>
+                        <label for="contourLayer" data-tooltip="Shows wind speed contours">Wind Contours</label>
                     </div>
                     <div class="layer-toggle">
                         <input type="checkbox" id="roofLayer">
-                        <label for="roofLayer">Roof Damage</label>
+                        <label for="roofLayer" data-tooltip="Estimated roof damage">Roof Damage</label>
                     </div>
                     <div class="layer-toggle">
                         <input type="checkbox" id="powerLayer">
-                        <label for="powerLayer">Power Outages</label>
+                        <label for="powerLayer" data-tooltip="Estimated power outages">Power Outages</label>
                     </div>
                     <div class="layer-toggle">
                         <input type="checkbox" id="ceLayer">
-                        <label for="ceLayer">C&E Population</label>
+                        <label for="ceLayer" data-tooltip="Communities with Environmental Justice concerns">C&E Population</label>
                     </div>
                     <div class="layer-toggle">
                         <input type="checkbox" id="debrisLayer">
-                        <label for="debrisLayer">Debris</label>
+                        <label for="debrisLayer" data-tooltip="Estimated debris generation">Debris</label>
                     </div>
                     <div class="layer-toggle">
                         <input type="checkbox" id="infraLayer">
-                        <label for="infraLayer">Infrastructure</label>
+                        <label for="infraLayer" data-tooltip="Critical infrastructure locations">Infrastructure</label>
                     </div>
                 </div>
             </div>
 
             <div class="info-panel">
+                <!-- <button class="share-button" id="shareButton">
+                    <span>Share</span>
+                </button> -->
                 <div class="summary-cards">
-                    <div class="card">
+                    <div class="card" id="residencesCard">
                         <h3>Total Residences</h3>
                         <p id="totalResidences">-</p>
                     </div>
-                    <div class="card">
+                    <div class="card" id="damageCard">
                         <h3>Estimated Blue Roofs</h3>
                         <p id="damagedRoofs">-</p>
                     </div>
-                    <div class="card">
+                    <div class="card" id="populationCard">
                         <h3>Total Population</h3>
                         <p id="totalPopulation">-</p>
                     </div>
-                    <div class="card">
+                    <div class="card" id="ceCard">
                         <h3>Disadvantaged Population</h3>
                         <p id="cePopulation">-</p>
                     </div>
-                    <div class="card">
+                    <div class="card" id="powerCard">
                         <h3>Power Outages</h3>
                         <p id="powerOutages">-</p>
                     </div>
-                    <div class="card">
+                    <div class="card" id="debrisCard">
                         <h3>Debris (cubic yards)</h3>
                         <p id="debrisAmount">-</p>
                     </div>
@@ -103,7 +106,28 @@
                 <div class="detail-section">
                     <h3>Landfall Information</h3>
                     <div id="landfallInfo">
-                        <p>Under Construction</p>
+                        <div class="landfall-grid">
+                            <div class="landfall-item">
+                                <span class="label">Location:</span>
+                                <span id="landfallLocation" class="value">-</span>
+                            </div>
+                            <div class="landfall-item">
+                                <span class="label">Expected Time:</span>
+                                <span id="landfallTime" class="value">-</span>
+                            </div>
+                            <div class="landfall-item">
+                                <span class="label">Wind Speed:</span>
+                                <span id="landfallWind" class="value">-</span>
+                            </div>
+                            <div class="landfall-item">
+                                <span class="label">Gust Speed:</span>
+                                <span id="landfallGust" class="value">-</span>
+                            </div>
+                            <div class="landfall-item">
+                                <span class="label">Category:</span>
+                                <span id="landfallCategory" class="value">-</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

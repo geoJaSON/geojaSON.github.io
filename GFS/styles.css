@@ -142,6 +142,30 @@ main {
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: #0056b3;
+}
+
+.card.severe::after {
+    background: #dc3545;
+}
+
+.card.moderate::after {
+    background: #ffc107;
+}
+
+.card.mild::after {
+    background: #28a745;
 }
 
 .card h3 {
@@ -201,9 +225,30 @@ main {
 
 @media (max-width: 768px) {
     header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        background: rgba(0, 86, 179, 0.9);
+        backdrop-filter: blur(5px);
         flex-direction: column;
         gap: 15px;
         text-align: center;
+        padding: 15px;
+    }
+
+    main {
+        grid-template-columns: 1fr;
+        height: 100vh;
+        padding: 0;
+        gap: 0;
+        padding-top: 120px; /* Add padding to account for header height */
+    }
+
+    .map-container {
+        height: calc(100vh - 120px); /* Subtract header height */
+        border-radius: 0;
     }
 
     .summary-cards {
@@ -211,47 +256,35 @@ main {
     }
 
     .layer-controls {
-        transform: translateX(calc(100% - 40px));
-    }
-
-    .layer-controls.expanded {
-        transform: translateX(0);
-    }
-
-    .layer-controls-toggle {
-        display: block;
-    }
-
-    .esri-legend {
-        transform: translateX(calc(100% - 40px));
-        transition: transform 0.3s ease;
-    }
-
-    .esri-legend.expanded {
-        transform: translateX(0);
-    }
-
-    .legend-toggle {
+        transform: none;
         position: absolute;
-        left: -30px;
-        top: 50%;
-        transform: translateY(-50%);
+        top: 20px;
+        right: 20px;
         background-color: white;
-        border: none;
-        border-radius: 4px 0 0 4px;
-        padding: 8px;
-        cursor: pointer;
-        box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         z-index: 1;
     }
 
-    .legend-toggle::before {
-        content: "◀";
-        font-size: 12px;
+    .layer-controls-toggle {
+        display: none;
     }
 
-    .esri-legend.expanded .legend-toggle::before {
-        content: "▶";
+    .esri-legend {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        background-color: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        z-index: 1;
+        transform: none;
+    }
+
+    .legend-toggle {
+        display: none;
     }
 
     .summary-stats {
@@ -261,6 +294,59 @@ main {
 
     .filters {
         flex-direction: column;
+    }
+
+    .landfall-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .info-panel {
+        position: fixed;
+        right: -100%;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+        z-index: 1000;
+        transition: right 0.3s ease;
+        padding: 20px;
+        overflow-y: auto;
+    }
+
+    .info-panel.expanded {
+        right: 0;
+    }
+
+    .info-panel-toggle {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        background: #0056b3;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+        z-index: 1001;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .info-panel-toggle::before {
+        content: "≡";
+    }
+
+    .info-panel.expanded + .info-panel-toggle::before {
+        content: "×";
+    }
+
+    /* Ensure map view takes full height of container */
+    #viewDiv {
+        height: 100% !important;
     }
 }
 
@@ -398,6 +484,15 @@ main {
 
 .stat-item {
     text-align: center;
+    position: relative;
+    padding-left: 20px;
+}
+
+.stat-item::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: #0056b3;
 }
 
 .stat-label {
@@ -445,4 +540,144 @@ main {
     border: 1px solid #ddd;
     border-radius: 4px;
     background-color: white;
+}
+
+.landfall-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.landfall-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.landfall-item .label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.landfall-item .value {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #0056b3;
+}
+
+/* Loading States */
+.loading {
+    position: relative;
+    min-height: 100px;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #0056b3;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Tooltips */
+[data-tooltip] {
+    position: relative;
+    cursor: help;
+}
+
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+[data-tooltip]:hover::before {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Last Updated Timestamp */
+.last-updated {
+    font-size: 0.8rem;
+    color: #666;
+    text-align: right;
+    padding: 5px 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+/* Share Button */
+.share-button {
+    background: #0056b3;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 10px 0;
+}
+
+.share-button:hover {
+    background: #003d82;
+}
+
+/* Trend Indicators */
+.trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+}
+
+.trend.up {
+    color: #dc3545;
+}
+
+.trend.down {
+    color: #28a745;
+}
+
+.trend::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+}
+
+.trend.up::before {
+    border-bottom: 5px solid currentColor;
+}
+
+.trend.down::before {
+    border-top: 5px solid currentColor;
 } 
