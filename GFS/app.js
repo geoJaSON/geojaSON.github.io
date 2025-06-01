@@ -211,7 +211,7 @@ require([
     });
 
     const roofLayer = new FeatureLayer({
-        url: featureServiceUrl + "/2",
+        url: featureServiceUrl + "/3",
         title: "Roof Damage",
         visible: false,
         popupTemplate: {
@@ -231,7 +231,7 @@ require([
     });
 
     const powerLayer = new FeatureLayer({
-        url: featureServiceUrl + "/3",
+        url: featureServiceUrl + "/2",
         title: "Power Outages",
         visible: false,
         popupTemplate: {
@@ -725,13 +725,16 @@ require([
                 const feature = results.features[0];
                 const attrs = feature.attributes;
                 
-                // Update summary cards with severity indicators
+                // Update summary cards with severity indicators and add click handlers
                 updateCardWithSeverity("residencesCard", attrs.total_roofs, 1000);
                 updateCardWithSeverity("damageCard", attrs.damaged_roofs, 100);
                 updateCardWithSeverity("populationCard", attrs.total_pop, 1000);
                 updateCardWithSeverity("ceCard", attrs.ce_pop, 100);
                 updateCardWithSeverity("powerCard", attrs.outages_power, 100);
                 updateCardWithSeverity("debrisCard", attrs.debris, 1000);
+
+                // Add click handlers for detailed breakdowns
+                addCardClickHandlers(storm, modelRun);
 
                 // Update landfall information
                 const landfallLocation = document.getElementById("landfallLocation");
@@ -948,5 +951,194 @@ require([
         } else {
             card.classList.add('mild');
         }
+    }
+
+    // Function to add click handlers to summary cards
+    function addCardClickHandlers(storm, modelRun) {
+        const cards = {
+            'residencesCard': {
+                title: 'Residence Breakdown',
+                query: roofLayer,
+                fields: ['county_name', 'state_name', 'sum_totalroofs'],
+                labels: ['County', 'State', 'Total Residences']
+            },
+            'damageCard': {
+                title: 'Roof Damage Breakdown',
+                query: roofLayer,
+                fields: ['county_name', 'state_name', 'sum_estroofs'],
+                labels: ['County', 'State', 'Estimated Damaged Roofs']
+            },
+            'populationCard': {
+                title: 'Population Breakdown',
+                query: ceLayer,
+                fields: ['county_name', 'state_name', 'sum_totalpop'],
+                labels: ['County', 'State', 'Total Population']
+            },
+            'ceCard': {
+                title: 'Disadvantaged Population Breakdown',
+                query: ceLayer,
+                fields: ['county_name', 'state_name', 'sum_estpop'],
+                labels: ['County', 'State', 'Disadvantaged Population']
+            },
+            'powerCard': {
+                title: 'Power Outage Breakdown',
+                query: powerLayer,
+                fields: ['county_name', 'state_abbrv', 'sum_estoutages'],
+                labels: ['County', 'State', 'Estimated Outages']
+            },
+            'debrisCard': {
+                title: 'Debris Breakdown',
+                query: debrisLayer,
+                fields: ['county_name', 'state_name', 'sum_totaldebris'],
+                labels: ['County', 'State', 'Estimated Debris (cubic yards)']
+            }
+        };
+
+        Object.entries(cards).forEach(([cardId, config]) => {
+            const card = document.getElementById(cardId);
+            if (card) {
+                card.style.cursor = 'pointer';
+                card.addEventListener('click', () => {
+                    showBreakdownPopup(config, storm, modelRun);
+                });
+            }
+        });
+    }
+
+    // Function to show breakdown popup
+    function showBreakdownPopup(config, storm, modelRun) {
+        let whereClause = `name = '${storm}'`;
+        if (modelRun) {
+            whereClause += ` AND modelrun = '${modelRun}'`;
+        }
+
+        config.query.queryFeatures({
+            where: whereClause,
+            outFields: config.fields,
+            returnGeometry: false
+        }).then((results) => {
+            const features = results.features;
+            
+            // Group data by state and county
+            const groupedData = features.reduce((acc, feature) => {
+                const state = feature.attributes[config.fields[1]];
+                const county = feature.attributes[config.fields[0]];
+                const value = Math.round(feature.attributes[config.fields[2]] || 0);
+
+                if (!acc[state]) {
+                    acc[state] = {
+                        total: 0,
+                        counties: {}
+                    };
+                }
+                if (!acc[state].counties[county]) {
+                    acc[state].counties[county] = 0;
+                }
+                acc[state].counties[county] += value;
+                acc[state].total += value;
+                return acc;
+            }, {});
+
+            // Sort states by total value
+            const sortedStates = Object.entries(groupedData)
+                .sort(([, a], [, b]) => b.total - a.total);
+
+            // Create popup content
+            const popup = document.createElement('div');
+            popup.className = 'breakdown-popup';
+            
+            // Add header
+            const header = document.createElement('div');
+            header.className = 'breakdown-header';
+            header.innerHTML = `
+                <h3>${config.title}</h3>
+                <button class="close-button">&times;</button>
+            `;
+            popup.appendChild(header);
+
+            // Create table
+            const table = document.createElement('table');
+            table.className = 'breakdown-table';
+            
+            // Add table header
+            const thead = document.createElement('thead');
+            thead.innerHTML = `<tr>${config.labels.map(label => `<th>${label}</th>`).join('')}</tr>`;
+            table.appendChild(thead);
+
+            // Add table body with grouped data
+            const tbody = document.createElement('tbody');
+            sortedStates.forEach(([state, stateData]) => {
+                // Add state row
+                const stateRow = document.createElement('tr');
+                stateRow.className = 'state-row';
+                stateRow.innerHTML = `
+                    <td colspan="2">${state}</td>
+                    <td class="state-total">${formatNumber(stateData.total)}</td>
+                `;
+                tbody.appendChild(stateRow);
+
+                // Add county rows
+                Object.entries(stateData.counties)
+                    .sort(([, a], [, b]) => b - a)
+                    .forEach(([county, value]) => {
+                        const countyRow = document.createElement('tr');
+                        countyRow.className = 'county-row';
+                        countyRow.innerHTML = `
+                            <td>${county}</td>
+                            <td>${state}</td>
+                            <td>${formatNumber(value)}</td>
+                        `;
+                        tbody.appendChild(countyRow);
+                    });
+            });
+            table.appendChild(tbody);
+            popup.appendChild(table);
+
+            // Add summary statistics
+            const summary = document.createElement('div');
+            summary.className = 'breakdown-summary';
+            
+            const total = features.reduce((sum, feature) => {
+                const value = feature.attributes[config.fields[2]];
+                return sum + (value || 0);
+            }, 0);
+            
+            const states = new Set(features.map(f => f.attributes[config.fields[1]]));
+            const counties = new Set(features.map(f => f.attributes[config.fields[0]]));
+            
+            summary.innerHTML = `
+                <div class="summary-item">
+                    <span class="label">Total:</span>
+                    <span class="value">${formatNumber(total)}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">States Impacted:</span>
+                    <span class="value">${states.size}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Counties Impacted:</span>
+                    <span class="value">${counties.size}</span>
+                </div>
+            `;
+            popup.appendChild(summary);
+
+            // Add to document
+            document.body.appendChild(popup);
+
+            // Add close button functionality
+            const closeButton = popup.querySelector('.close-button');
+            closeButton.addEventListener('click', () => {
+                popup.remove();
+            });
+
+            // Close on outside click
+            popup.addEventListener('click', (e) => {
+                if (e.target === popup) {
+                    popup.remove();
+                }
+            });
+        }).catch(error => {
+            console.error("Error querying breakdown data:", error);
+        });
     }
 }); 

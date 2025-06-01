@@ -144,6 +144,8 @@ main {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease;
 }
 
 .card::after {
@@ -680,4 +682,153 @@ main {
 
 .trend.down::before {
     border-top: 5px solid currentColor;
+}
+
+/* Breakdown Popup Styles */
+.breakdown-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.breakdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #0056b3;
+}
+
+.breakdown-header h3 {
+    margin: 0;
+    color: #0056b3;
+    font-size: 1.2rem;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #666;
+    cursor: pointer;
+    padding: 0 5px;
+}
+
+.close-button:hover {
+    color: #0056b3;
+}
+
+.breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.breakdown-table th,
+.breakdown-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.breakdown-table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+    color: #333;
+}
+
+.breakdown-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.breakdown-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.summary-item .label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.summary-item .value {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #0056b3;
+}
+
+/* Mobile styles for breakdown popup */
+@media (max-width: 768px) {
+    .breakdown-popup {
+        width: 95%;
+        max-height: 80vh;
+        padding: 15px;
+    }
+
+    .breakdown-table {
+        font-size: 0.8rem;
+    }
+
+    .breakdown-table th,
+    .breakdown-table td {
+        padding: 6px;
+    }
+
+    .breakdown-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
+.breakdown-table .state-row {
+    background-color: #f0f7ff;
+    font-weight: bold;
+}
+
+.breakdown-table .state-row td {
+    padding: 12px 8px;
+    border-bottom: 2px solid #0056b3;
+}
+
+.breakdown-table .state-total {
+    color: #0056b3;
+}
+
+.breakdown-table .county-row td {
+    padding-left: 20px;
+}
+
+.breakdown-table .county-row:hover {
+    background-color: #f8f9fa;
+}
+
+/* Add subtle indentation for county rows */
+.breakdown-table .county-row td:first-child {
+    padding-left: 30px;
+}
+
+/* Add subtle separator between states */
+.breakdown-table .state-row + .county-row td {
+    border-top: 1px solid #eee;
 } 
