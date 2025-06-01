@@ -10,6 +10,19 @@
 </head>
 <body>
     <div class="container">
+        <div id="splashScreen" class="splash-screen">
+            <div class="splash-content">
+                <h2>Important Disclaimer</h2>
+                <p>This application is for informational purposes only. Do not make critical decisions based solely on this information.</p>
+                <p>For official forecasts and emergency information:</p>
+                <ul>
+                    <li>Consult your local National Weather Service office</li>
+                    <li>Follow guidance from local emergency management officials</li>
+                    <li>Monitor official weather alerts and warnings</li>
+                </ul>
+                <button id="acceptDisclaimer" class="accept-button">I Understand</button>
+            </div>
+        </div>
         <header>
             <h1>Hurricane Impact Analysis</h1>
             <div class="selectors">
@@ -28,7 +41,7 @@
                 <div class="layer-controls">
                     <h3>Layers</h3>
                     <div class="layer-toggle">
-                        <input type="checkbox" id="coneLayer" checked>
+                        <input type="checkbox" id="coneLayer">
                         <label for="coneLayer">Forecast Cone</label>
                     </div>
                     <div class="layer-toggle">
@@ -89,12 +102,39 @@
                 <div class="detail-section">
                     <h3>Landfall Information</h3>
                     <div id="landfallInfo">
-                        <p>Select a storm to view landfall information.</p>
+                        <p>Under Construction</p>
                     </div>
                 </div>
 
                 <div class="detail-section">
                     <h3>Infrastructure Impact</h3>
+                    <div class="infrastructure-summary">
+                        <div class="summary-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Total Facilities:</span>
+                                <span id="totalFacilities" class="stat-value">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">States Impacted:</span>
+                                <span id="statesImpacted" class="stat-value">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Counties Impacted:</span>
+                                <span id="countiesImpacted" class="stat-value">-</span>
+                            </div>
+                        </div>
+                        <div class="type-counts" id="typeCounts">
+                            <!-- Type counts will be populated by JavaScript -->
+                        </div>
+                        <div class="filters">
+                            <select id="stateFilter">
+                                <option value="">All States</option>
+                            </select>
+                            <select id="countyFilter">
+                                <option value="">All Counties</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="infrastructure-table-container">
                         <table id="infrastructureTable">
                             <thead>

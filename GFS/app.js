@@ -28,13 +28,13 @@ require([
     });
 
     // Feature service URL
-    const featureServiceUrl = "https://services3.arcgis.com/Mnb1L9L8KBh57Ag4/arcgis/rest/services/HurricaneModelOutputs/FeatureServer";
+    const featureServiceUrl = "https://services3.arcgis.com/Mnb1L9L8KBh57Ag4/arcgis/rest/services/HurricaneModelOutputs_view/FeatureServer";
 
     // Create feature layers
     const coneLayer = new FeatureLayer({
         url: featureServiceUrl + "/0",
         title: "Forecast Cone",
-        visible: true,
+        visible: false,
         outFields: ["*"],
         renderer: {
             type: "simple",
@@ -58,7 +58,8 @@ require([
                         { fieldName: "total_pop", label: "Total Population" },
                         { fieldName: "ce_pop", label: "Disadvantaged Population" },
                         { fieldName: "outages_power", label: "Power Outages" },
-                        { fieldName: "category", label: "Storm Category" }
+                        { fieldName: "category", label: "Storm Category" },
+                        { fieldName: "debris", label: "Estimated Debris" }
                     ]
                 }
             ]
@@ -385,7 +386,7 @@ require([
                     type: "fields",
                     fieldInfos: [
                         { fieldName: "subsector", label: "Facility Type" },
-                        { fieldName: "name", label: "Facility Name" },
+                        { fieldName: "ci_name", label: "Facility Name" },
                         { fieldName: "address1", label: "Address" },
                         { fieldName: "county_name", label: "County" },
                         { fieldName: "state", label: "State" }
@@ -412,9 +413,57 @@ require([
             border: "1px solid #ccc",
             borderRadius: "4px",
             padding: "10px"
-        }
+        },
+        hideLayersNotInCurrentView: true
     });
     view.ui.add(legend, "bottom-left");
+
+    // Wait for view to load before adding mobile controls
+    view.when(() => {
+        // Add toggle buttons for mobile view
+        const layerControls = document.querySelector('.layer-controls');
+        const legendElement = document.querySelector('.esri-legend');
+
+        if (layerControls) {
+            // Create layer controls toggle button
+            const layerControlsToggle = document.createElement('button');
+            layerControlsToggle.className = 'layer-controls-toggle';
+            layerControlsToggle.setAttribute('aria-label', 'Toggle layer controls');
+            layerControls.appendChild(layerControlsToggle);
+
+            // Add click handler for layer controls toggle
+            layerControlsToggle.addEventListener('click', () => {
+                layerControls.classList.toggle('expanded');
+            });
+        }
+
+        if (legendElement) {
+            // Create legend toggle button
+            const legendToggle = document.createElement('button');
+            legendToggle.className = 'legend-toggle';
+            legendToggle.setAttribute('aria-label', 'Toggle legend');
+            legendElement.appendChild(legendToggle);
+
+            // Add click handler for legend toggle
+            legendToggle.addEventListener('click', () => {
+                legendElement.classList.toggle('expanded');
+            });
+        }
+
+        // Handle splash screen
+        const splashScreen = document.getElementById('splashScreen');
+        const acceptButton = document.getElementById('acceptDisclaimer');
+
+        // Check if user has already accepted the disclaimer
+        if (!localStorage.getItem('disclaimerAccepted')) {
+            splashScreen.classList.remove('hidden');
+        }
+
+        acceptButton.addEventListener('click', () => {
+            splashScreen.classList.add('hidden');
+            localStorage.setItem('disclaimerAccepted', 'true');
+        });
+    });
 
     // Layer visibility toggles
     document.getElementById("coneLayer").addEventListener("change", (e) => {
@@ -543,7 +592,7 @@ require([
                 document.getElementById("totalPopulation").textContent = formatNumber(attrs.total_pop);
                 document.getElementById("cePopulation").textContent = formatNumber(attrs.ce_pop);
                 document.getElementById("powerOutages").textContent = formatNumber(attrs.outages_power);
-                document.getElementById("debrisAmount").textContent = formatNumber(attrs.total_debris);
+                document.getElementById("debrisAmount").textContent = formatNumber(attrs.debris);
 
                 // Zoom to the feature
                 view.goTo({
@@ -569,17 +618,88 @@ require([
             const tableBody = document.querySelector("#infrastructureTable tbody");
             tableBody.innerHTML = ''; // Clear existing rows
 
-            results.features.forEach(feature => {
+            // Update summary statistics
+            const facilities = results.features;
+            const states = new Set();
+            const counties = new Set();
+            const typeCounts = {};
+
+            facilities.forEach(feature => {
+                const state = feature.attributes.state;
+                const county = feature.attributes.county_name;
+                const type = feature.attributes.subsector;
+
+                if (state) states.add(state);
+                if (county) counties.add(county);
+                if (type) {
+                    typeCounts[type] = (typeCounts[type] || 0) + 1;
+                }
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${feature.attributes.subsector || '-'}</td>
-                    <td>${feature.attributes.ci_name || '-'}</td>
+                    <td>${feature.attributes.name || '-'}</td>
                     <td>${feature.attributes.county_name || '-'}</td>
                     <td>${feature.attributes.state || '-'}</td>
                     <td>${feature.attributes.contourmax ? feature.attributes.contourmax + ' mph' : '-'}</td>
                 `;
                 tableBody.appendChild(row);
             });
+
+            // Update summary stats
+            document.getElementById("totalFacilities").textContent = facilities.length;
+            document.getElementById("statesImpacted").textContent = states.size;
+            document.getElementById("countiesImpacted").textContent = counties.size;
+
+            // Update type counts
+            const typeCountsContainer = document.getElementById("typeCounts");
+            typeCountsContainer.innerHTML = '';
+            Object.entries(typeCounts).forEach(([type, count]) => {
+                const div = document.createElement('div');
+                div.className = 'type-count-item';
+                div.innerHTML = `${type}: <span class="count">${count}</span>`;
+                typeCountsContainer.appendChild(div);
+            });
+
+            // Update state filter
+            const stateFilter = document.getElementById("stateFilter");
+            stateFilter.innerHTML = '<option value="">All States</option>';
+            Array.from(states).sort().forEach(state => {
+                const option = document.createElement('option');
+                option.value = state;
+                option.textContent = state;
+                stateFilter.appendChild(option);
+            });
+
+            // Update county filter
+            const countyFilter = document.getElementById("countyFilter");
+            countyFilter.innerHTML = '<option value="">All Counties</option>';
+            Array.from(counties).sort().forEach(county => {
+                const option = document.createElement('option');
+                option.value = county;
+                option.textContent = county;
+                countyFilter.appendChild(option);
+            });
+
+            // Add filter event listeners
+            stateFilter.addEventListener('change', filterTable);
+            countyFilter.addEventListener('change', filterTable);
+
+            function filterTable() {
+                const selectedState = stateFilter.value;
+                const selectedCounty = countyFilter.value;
+                
+                const rows = tableBody.getElementsByTagName('tr');
+                Array.from(rows).forEach(row => {
+                    const state = row.cells[3].textContent;
+                    const county = row.cells[2].textContent;
+                    
+                    const stateMatch = !selectedState || state === selectedState;
+                    const countyMatch = !selectedCounty || county === selectedCounty;
+                    
+                    row.style.display = stateMatch && countyMatch ? '' : 'none';
+                });
+            }
         }).catch(error => {
             console.error("Error querying infrastructure data:", error);
         });
