@@ -6,6 +6,7 @@
     <title>Hurricane Impact Analysis</title>
     <link rel="stylesheet" href="https://js.arcgis.com/4.27/esri/themes/light/main.css">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://js.arcgis.com/4.27/"></script>
 </head>
 <body>
@@ -107,6 +108,12 @@
                 </div>
 
                 <div class="detail-section">
+                    <h3>Land Use Impact</h3>
+                    <div class="chart-container">
+                        <canvas id="landUseChart"></canvas>
+                    </div>
+                </div>
+                <div class="detail-section">
                     <h3>Infrastructure Impact</h3>
                     <div class="infrastructure-summary">
                         <div class="summary-stats">
@@ -152,6 +159,7 @@
                         </table>
                     </div>
                 </div>
+
             </div>
         </main>
     </div>

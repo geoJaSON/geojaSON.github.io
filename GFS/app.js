@@ -418,8 +418,71 @@ require([
     });
     view.ui.add(legend, "bottom-left");
 
-    // Wait for view to load before adding mobile controls
+    // Initialize land use chart
+    let landUseChart = null;
+
+    // Wait for view to load before adding mobile controls and initializing chart
     view.when(() => {
+        // Initialize chart after DOM is ready
+        const ctx = document.getElementById('landUseChart');
+        if (ctx) {
+            landUseChart = new Chart(ctx.getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#e8d1d1', // Developed, Open Space
+                            '#e29e8c', // Developed, Low Intensity
+                            '#ff0000', // Developed, Medium Intensity
+                            '#b50000', // Developed High Intensity
+                            '#d2cdc0', // Barren Land
+                            '#85c77e', // Deciduous Forest
+                            '#85c77e', // Evergreen Forest
+                            '#d4e7b0', // Mixed Forest
+                            '#af963c', // Dwarf Scrub
+                            '#dcca8f', // Shrub/Scrub
+                            '#fde9aa', // Grassland/Herbaceous
+                            '#d1d182', // Sedge/Herbaceous
+                            '#fbf65d', // Pasture/Hay
+                            '#ca9146', // Cultivated Crops
+                            '#c8e6f8', // Woody Wetlands
+                            '#64b4d6'  // Emergent Herbaceous Wetlands
+                        ],
+                        borderWidth: 1,
+                        borderColor: '#000'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 15,
+                                padding: 15,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${context.label}: ${formatNumber(value)} sq mi (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         // Add toggle buttons for mobile view
         const layerControls = document.querySelector('.layer-controls');
         const legendElement = document.querySelector('.esri-legend');
@@ -594,6 +657,22 @@ require([
                 document.getElementById("powerOutages").textContent = formatNumber(attrs.outages_power);
                 document.getElementById("debrisAmount").textContent = formatNumber(attrs.debris);
 
+                // Query contour layer for land use data
+                contourLayer.queryFeatures({
+                    where: whereClause,
+                    outFields: [
+                        "land_use_21_sq_miles", "land_use_22_sq_miles", "land_use_23_sq_miles", "land_use_24_sq_miles",
+                        "land_use_31_sq_miles", "land_use_41_sq_miles", "land_use_42_sq_miles", "land_use_43_sq_miles",
+                        "land_use_51_sq_miles", "land_use_52_sq_miles", "land_use_71_sq_miles", "land_use_72_sq_miles",
+                        "land_use_81_sq_miles", "land_use_82_sq_miles", "land_use_90_sq_miles", "land_use_95_sq_miles"
+                    ],
+                    returnGeometry: false
+                }).then((landUseResults) => {
+                    updateLandUseChart(landUseResults.features);
+                }).catch(error => {
+                    console.error("Error querying land use data:", error);
+                });
+
                 // Zoom to the feature
                 view.goTo({
                     target: feature.geometry,
@@ -709,5 +788,41 @@ require([
         layers.forEach(layer => {
             layer.definitionExpression = whereClause;
         });
+    }
+
+    function updateLandUseChart(features) {
+        if (!landUseChart) return;
+
+        // Land use labels and corresponding field names
+        const landUseLabels = [
+            'Developed, Open Space', 'Developed, Low Intensity', 'Developed, Medium Intensity',
+            'Developed High Intensity', 'Barren Land (Rock/Sand/Clay)', 'Deciduous Forest',
+            'Evergreen Forest', 'Mixed Forest', 'Dwarf Scrub', 'Shrub/Scrub',
+            'Grassland/Herbaceous', 'Sedge/Herbaceous', 'Pasture/Hay', 'Cultivated Crops',
+            'Woody Wetlands', 'Emergent Herbaceous Wetlands'
+        ];
+        const landUseFields = [
+            'land_use_21_sq_miles', 'land_use_22_sq_miles', 'land_use_23_sq_miles', 'land_use_24_sq_miles',
+            'land_use_31_sq_miles', 'land_use_41_sq_miles', 'land_use_42_sq_miles', 'land_use_43_sq_miles',
+            'land_use_51_sq_miles', 'land_use_52_sq_miles', 'land_use_71_sq_miles', 'land_use_72_sq_miles',
+            'land_use_81_sq_miles', 'land_use_82_sq_miles', 'land_use_90_sq_miles', 'land_use_95_sq_miles'
+        ];
+
+        // Sum the land use areas
+        const landUseSizes = landUseFields.map(field => {
+            return features.reduce((sum, feature) => {
+                return sum + (feature.attributes[field] || 0);
+            }, 0);
+        });
+
+        // Filter out zero values
+        const filteredData = landUseLabels
+            .map((label, index) => ({ label, value: landUseSizes[index] }))
+            .filter(item => item.value > 0);
+
+        // Update chart data
+        landUseChart.data.labels = filteredData.map(item => item.label);
+        landUseChart.data.datasets[0].data = filteredData.map(item => item.value);
+        landUseChart.update();
     }
 }); 
