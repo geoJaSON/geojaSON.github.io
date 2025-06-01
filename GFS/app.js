@@ -755,7 +755,7 @@ require([
                 }
 
                 // Update last updated timestamp
-                document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+                //document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
 
                 // Query contour layer for land use data
                 contourLayer.queryFeatures({
@@ -796,7 +796,7 @@ require([
         // Update infrastructure table
         infraLayer.queryFeatures({
             where: whereClause,
-            outFields: ["subsector", "name", "county_name", "state", "contourmax"],
+            outFields: ["subsector", "name", "ci_name", "county_name", "state", "contourmax"],
             returnGeometry: false
         }).then((results) => {
             const tableBody = document.querySelector("#infrastructureTable tbody");
@@ -822,7 +822,7 @@ require([
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${feature.attributes.subsector || '-'}</td>
-                    <td>${feature.attributes.name || '-'}</td>
+                    <td>${feature.attributes.ci_name || '-'}</td>
                     <td>${feature.attributes.county_name || '-'}</td>
                     <td>${feature.attributes.state || '-'}</td>
                     <td>${feature.attributes.contourmax ? feature.attributes.contourmax + ' mph' : '-'}</td>
