@@ -831,4 +831,38 @@ main {
 /* Add subtle separator between states */
 .breakdown-table .state-row + .county-row td {
     border-top: 1px solid #eee;
+}
+
+.disclaimer-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+    align-items: center;
+}
+
+.dont-show-again {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.dont-show-again input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.dont-show-again span {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+@media (min-width: 768px) {
+    .disclaimer-options {
+        flex-direction: row;
+        justify-content: space-between;
+    }
 } 

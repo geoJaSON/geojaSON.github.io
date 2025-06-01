@@ -587,15 +587,18 @@ require([
         // Handle splash screen
         const splashScreen = document.getElementById('splashScreen');
         const acceptButton = document.getElementById('acceptDisclaimer');
+        const dontShowAgain = document.getElementById('dontShowAgain');
 
         // Check if user has already accepted the disclaimer
-        if (!localStorage.getItem('disclaimerAccepted')) {
-            splashScreen.classList.remove('hidden');
+        if (localStorage.getItem('disclaimerAccepted')) {
+            splashScreen.classList.add('hidden');
         }
 
         acceptButton.addEventListener('click', () => {
             splashScreen.classList.add('hidden');
-            localStorage.setItem('disclaimerAccepted', 'true');
+            if (dontShowAgain.checked) {
+                localStorage.setItem('disclaimerAccepted', 'true');
+            }
         });
     });
 
@@ -983,7 +986,7 @@ require([
             'powerCard': {
                 title: 'Power Outage Breakdown',
                 query: powerLayer,
-                fields: ['county_name', 'state_abbrv', 'sum_estoutages'],
+                fields: ['county_name', 'state_name', 'sum_estoutages'],
                 labels: ['County', 'State', 'Estimated Outages']
             },
             'debrisCard': {
@@ -1039,8 +1042,9 @@ require([
                 return acc;
             }, {});
 
-            // Sort states by total value
+            // Sort states by total value and filter out states with zero totals
             const sortedStates = Object.entries(groupedData)
+                .filter(([, stateData]) => stateData.total > 0) // Only show states with totals greater than 0
                 .sort(([, a], [, b]) => b.total - a.total);
 
             // Create popup content
@@ -1080,6 +1084,7 @@ require([
                 // Add county rows
                 Object.entries(stateData.counties)
                     .sort(([, a], [, b]) => b - a)
+                    .filter(([, value]) => value > 0) // Only show counties with values greater than 0
                     .forEach(([county, value]) => {
                         const countyRow = document.createElement('tr');
                         countyRow.className = 'county-row';

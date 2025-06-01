@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hurricane Impact Analysis</title>
+    <title>Hurricane Impact GFS Analysis</title>
     <link rel="stylesheet" href="https://js.arcgis.com/4.27/esri/themes/light/main.css">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
@@ -21,11 +21,17 @@
                     <li>Follow guidance from local emergency management officials</li>
                     <li>Monitor official weather alerts and warnings</li>
                 </ul>
-                <button id="acceptDisclaimer" class="accept-button">I Understand</button>
+                <div class="disclaimer-options">
+                    <label class="dont-show-again">
+                        <input type="checkbox" id="dontShowAgain">
+                        <span>Don't show this message again</span>
+                    </label>
+                    <button id="acceptDisclaimer" class="accept-button">I Understand</button>
+                </div>
             </div>
         </div>
         <header>
-            <h1>Hurricane Impact Analysis</h1>
+            <h1>GFS Hurricane Impact Analysis</h1>
             <div class="selectors">
                 <select id="stormSelect">
                     <option value="">Select Storm</option>
